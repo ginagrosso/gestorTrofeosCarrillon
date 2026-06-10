@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-brown: #7B4A2D;
+  --color-brand-gold: #C9A84C;
+  --color-brand-cream: #F5EFE0;
+}
+
+body {
+  margin: 0;
+}
