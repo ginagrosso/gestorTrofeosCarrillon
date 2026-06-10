@@ -19,6 +19,7 @@ Presupuesto cerrado: ARS $420.000 · 3 cuotas · garantía 1 mes post-entrega.
 - Import/export Excel: artículos, clientes, ventas
 - Login con usuario y contraseña
 - Acceso web + mobile (responsive)
+- PWA instalable (manifest + service worker, soporte offline básico)
 
 **Fuera de alcance sin nuevo presupuesto:** cualquier feature no listada arriba.
 
@@ -34,6 +35,7 @@ Firebase Hosting     deploy frontend
 React 18 + Vite      frontend
 TypeScript           todo el codebase
 Zod                  validación de schemas
+vite-plugin-pwa      manifest + service worker (PWA)
 ```
 
 ---
