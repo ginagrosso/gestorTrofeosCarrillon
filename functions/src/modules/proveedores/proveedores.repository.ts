@@ -19,6 +19,17 @@ export const proveedoresRepository = {
     return { id: doc.id, ...doc.data() } as Proveedor
   },
 
+  async findByNombre(nombre: string): Promise<Proveedor | null> {
+    const snap = await db.collection(COLLECTIONS.PROVEEDORES)
+      .where('nombre', '==', nombre)
+      .where('deletedAt', '==', null)
+      .limit(1)
+      .get()
+
+    if (snap.empty) return null
+    return { id: snap.docs[0].id, ...snap.docs[0].data() } as Proveedor
+  },
+
   async create(data: InsertProveedor): Promise<Proveedor> {
     const now = Timestamp.now()
     const ref = await db.collection(COLLECTIONS.PROVEEDORES).add({
