@@ -5,7 +5,6 @@ import {
   type InsertProveedor,
   type Proveedor,
   SIT_IVA_LABELS,
-  RUBRO_PROVEEDOR_LABELS,
 } from '@/shared/lib/types'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
@@ -34,7 +33,7 @@ export default function ProveedorForm({ proveedor, onSuccess }: ProveedorFormPro
       sitIva: 'RESPONSABLE_INSCRIPTO',
       telefono1: '',
       telefono2: '',
-      rubro: 'AUTOPARTES',
+      rubro: '',
     },
   })
 
@@ -57,22 +56,22 @@ export default function ProveedorForm({ proveedor, onSuccess }: ProveedorFormPro
       </div>
 
       <div className="space-y-1">
-        <Label htmlFor="contacto">Contacto</Label>
+        <Label htmlFor="contacto">Contacto (opcional)</Label>
         <Input id="contacto" {...form.register('contacto')} />
       </div>
 
       <div className="space-y-1">
-        <Label htmlFor="localidad">Localidad</Label>
+        <Label htmlFor="localidad">Localidad (opcional)</Label>
         <Input id="localidad" {...form.register('localidad')} />
       </div>
 
       <div className="space-y-1">
-        <Label htmlFor="direccion">Dirección</Label>
+        <Label htmlFor="direccion">Dirección (opcional)</Label>
         <Input id="direccion" {...form.register('direccion')} />
       </div>
 
       <div className="space-y-1">
-        <Label htmlFor="cuit">CUIT</Label>
+        <Label htmlFor="cuit">CUIT (opcional)</Label>
         <Input id="cuit" {...form.register('cuit')} />
       </div>
 
@@ -87,22 +86,18 @@ export default function ProveedorForm({ proveedor, onSuccess }: ProveedorFormPro
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
-          <Label htmlFor="telefono1">Teléfono 1</Label>
+          <Label htmlFor="telefono1">Teléfono 1 (opcional)</Label>
           <Input id="telefono1" {...form.register('telefono1')} />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="telefono2">Teléfono 2</Label>
+          <Label htmlFor="telefono2">Teléfono 2 (opcional)</Label>
           <Input id="telefono2" {...form.register('telefono2')} />
         </div>
       </div>
 
       <div className="space-y-1">
-        <Label htmlFor="rubro">Rubro</Label>
-        <Select id="rubro" {...form.register('rubro')}>
-          {Object.entries(RUBRO_PROVEEDOR_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </Select>
+        <Label htmlFor="rubro">Rubro (opcional)</Label>
+        <Input id="rubro" {...form.register('rubro')} />
       </div>
 
       <Button type="submit" disabled={isPending}>

@@ -79,7 +79,7 @@ id, nombre, contacto, localidad, direccion, cuit,
 sit_iva, telefono1, telefono2, rubro
 ```
 `sit_iva`: `RESPONSABLE_INSCRIPTO | MONOTRIBUTO | EXENTO | CONSUMIDOR_FINAL`
-`rubro`: `AUTOPARTES | COMPRA_MAYORISTA`
+`rubro`: texto libre, opcional (categoría descriptiva del proveedor, sin valores fijos)
 
 ### clientes (~1000 registros)
 ```

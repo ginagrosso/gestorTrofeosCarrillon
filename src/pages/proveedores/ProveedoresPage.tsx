@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, MessageCircle } from 'lucide-react'
 import { useProveedores, useDeleteProveedor, ProveedorForm } from '@/features/proveedores'
-import { SIT_IVA_LABELS, RUBRO_PROVEEDOR_LABELS, type Proveedor } from '@/shared/lib/types'
+import { SIT_IVA_LABELS, type Proveedor } from '@/shared/lib/types'
+import { getWhatsAppUrl } from '@/shared/lib/whatsapp'
 import { Button } from '@/shared/ui/button'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table'
@@ -65,28 +66,40 @@ export default function ProveedoresPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {proveedores?.map((proveedor) => (
-              <TableRow key={proveedor.id}>
-                <TableCell className="font-medium">{proveedor.nombre}</TableCell>
-                <TableCell>{proveedor.contacto || '—'}</TableCell>
-                <TableCell>{proveedor.localidad || '—'}</TableCell>
-                <TableCell>{proveedor.telefono1 || '—'}</TableCell>
-                <TableCell>{SIT_IVA_LABELS[proveedor.sitIva]}</TableCell>
-                <TableCell>{RUBRO_PROVEEDOR_LABELS[proveedor.rubro]}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(proveedor)}>
-                      <Pencil />
-                      <span className="sr-only">Editar</span>
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeletingProveedor(proveedor)}>
-                      <Trash2 />
-                      <span className="sr-only">Eliminar</span>
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {proveedores?.map((proveedor) => {
+              const whatsappPhone = proveedor.telefono1 || proveedor.telefono2
+
+              return (
+                <TableRow key={proveedor.id}>
+                  <TableCell className="font-medium">{proveedor.nombre}</TableCell>
+                  <TableCell>{proveedor.contacto || '—'}</TableCell>
+                  <TableCell>{proveedor.localidad || '—'}</TableCell>
+                  <TableCell>{proveedor.telefono1 || '—'}</TableCell>
+                  <TableCell>{SIT_IVA_LABELS[proveedor.sitIva]}</TableCell>
+                  <TableCell>{proveedor.rubro || '—'}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      {whatsappPhone && (
+                        <Button variant="ghost" size="icon" asChild>
+                          <a href={getWhatsAppUrl(whatsappPhone)} target="_blank" rel="noopener noreferrer">
+                            <MessageCircle className="text-green-600" />
+                            <span className="sr-only">Abrir WhatsApp</span>
+                          </a>
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(proveedor)}>
+                        <Pencil />
+                        <span className="sr-only">Editar</span>
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => setDeletingProveedor(proveedor)}>
+                        <Trash2 />
+                        <span className="sr-only">Eliminar</span>
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
       )}

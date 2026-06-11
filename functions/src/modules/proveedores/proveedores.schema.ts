@@ -10,7 +10,7 @@ export const insertProveedorSchema = z.object({
   sitIva:     z.enum(['RESPONSABLE_INSCRIPTO', 'MONOTRIBUTO', 'EXENTO', 'CONSUMIDOR_FINAL']),
   telefono1:  z.string().max(30).optional(),
   telefono2:  z.string().max(30).optional(),
-  rubro:      z.enum(['AUTOPARTES', 'COMPRA_MAYORISTA']),
+  rubro:      z.string().max(100).optional(),
 })
 
 export const updateProveedorSchema = insertProveedorSchema.partial()
