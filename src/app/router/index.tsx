@@ -1,7 +1,13 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import ProtectedLayout from '@/app/layouts/ProtectedLayout'
+import AdminLayout from '@/app/layouts/AdminLayout'
 import LoginPage from '@/pages/auth/LoginPage'
+import ArticulosPage from '@/pages/articulos/ArticulosPage'
 import ProveedoresPage from '@/pages/proveedores/ProveedoresPage'
+import ClientesPage from '@/pages/clientes/ClientesPage'
+import ProductosPage from '@/pages/productos/ProductosPage'
+import VentasPage from '@/pages/ventas/VentasPage'
+import ImportarExportarPage from '@/pages/importar-exportar/ImportarExportarPage'
 
 const router = createBrowserRouter([
   {
@@ -12,18 +18,16 @@ const router = createBrowserRouter([
     element: <ProtectedLayout />,
     children: [
       {
-        path: '/',
-        element: (
-          <div className="flex min-h-screen items-center justify-center bg-brand-cream">
-            <h1 className="text-2xl font-semibold text-brand-brown">
-              Trofeos Carrillon
-            </h1>
-          </div>
-        ),
-      },
-      {
-        path: '/proveedores',
-        element: <ProveedoresPage />,
+        element: <AdminLayout />,
+        children: [
+          { path: '/', element: <ArticulosPage /> },
+          { path: '/articulos', element: <ArticulosPage /> },
+          { path: '/proveedores', element: <ProveedoresPage /> },
+          { path: '/clientes', element: <ClientesPage /> },
+          { path: '/productos', element: <ProductosPage /> },
+          { path: '/ventas', element: <VentasPage /> },
+          { path: '/importar-exportar', element: <ImportarExportarPage /> },
+        ],
       },
     ],
   },
