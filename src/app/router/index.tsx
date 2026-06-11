@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import ProveedoresPage from '@/pages/proveedores/ProveedoresPage'
 
 const router = createBrowserRouter([
   {
@@ -10,6 +11,10 @@ const router = createBrowserRouter([
         </h1>
       </div>
     ),
+  },
+  {
+    path: '/proveedores',
+    element: <ProveedoresPage />,
   },
 ])
 
