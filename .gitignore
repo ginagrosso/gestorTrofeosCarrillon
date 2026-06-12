@@ -44,3 +44,6 @@ vite.config.ts.timestamp-*
 *.njsproj
 *.sln
 *.sw?
+
+# Exports del sistema legacy (datos reales de clientes/proveedores, no versionar)
+*Carrillon*.xls

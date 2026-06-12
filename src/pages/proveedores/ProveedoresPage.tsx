@@ -1,11 +1,17 @@
 import { useState } from 'react'
 import { Plus, Pencil, Trash2, MessageCircle } from 'lucide-react'
 import { useProveedores, useDeleteProveedor, ProveedorForm } from '@/features/proveedores'
+import { useImportarProveedores, proveedorColumns } from '@/features/importar-exportar'
 import { SIT_IVA_LABELS, type Proveedor } from '@/shared/lib/types'
 import { getWhatsAppUrl } from '@/shared/lib/whatsapp'
+import { usePagination } from '@/shared/hooks/usePagination'
+import { useSearch } from '@/shared/hooks/useSearch'
 import { Button } from '@/shared/ui/button'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table'
+import { Pagination } from '@/shared/ui/pagination'
+import { SearchInput } from '@/shared/ui/search-input'
+import { ImportExportButtons } from '@/shared/ui/import-export-buttons'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/shared/ui/sheet'
 import {
   AlertDialog,
@@ -18,9 +24,14 @@ import {
   AlertDialogCancel,
 } from '@/shared/ui/alert-dialog'
 
+const PROVEEDOR_SEARCH_FIELDS: (keyof Proveedor)[] = ['nombre', 'contacto', 'localidad', 'rubro', 'cuit']
+
 export default function ProveedoresPage() {
   const { data: proveedores, isLoading } = useProveedores()
   const { mutate: deleteProveedor, isPending: isDeleting } = useDeleteProveedor()
+  const importarProveedores = useImportarProveedores()
+  const { search, setSearch, filteredItems } = useSearch(proveedores ?? [], PROVEEDOR_SEARCH_FIELDS)
+  const { page, totalPages, totalItems, pageSize, paginatedItems, setPage } = usePagination(filteredItems)
 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingProveedor, setEditingProveedor] = useState<Proveedor | undefined>(undefined)
@@ -38,13 +49,23 @@ export default function ProveedoresPage() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold text-brand-brown">Proveedores</h1>
-        <Button onClick={handleNew}>
-          <Plus />
-          Nuevo proveedor
-        </Button>
+        <div className="flex items-center gap-2">
+          <ImportExportButtons
+            columns={proveedorColumns}
+            data={proveedores ?? []}
+            filename="proveedores.xlsx"
+            importMutation={importarProveedores}
+          />
+          <Button onClick={handleNew}>
+            <Plus />
+            Nuevo proveedor
+          </Button>
+        </div>
       </header>
+
+      <SearchInput value={search} onChange={setSearch} placeholder="Buscar proveedor..." />
 
       {isLoading ? (
         <div className="flex flex-col gap-2">
@@ -66,7 +87,7 @@ export default function ProveedoresPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {proveedores?.map((proveedor) => {
+            {paginatedItems.map((proveedor) => {
               const whatsappPhone = proveedor.telefono1 || proveedor.telefono2
 
               return (
@@ -102,6 +123,16 @@ export default function ProveedoresPage() {
             })}
           </TableBody>
         </Table>
+      )}
+
+      {!isLoading && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       )}
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>

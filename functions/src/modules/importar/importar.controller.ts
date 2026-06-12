@@ -3,6 +3,7 @@ import { importRequestSchema } from '../../shared/lib/import-result.js'
 import { proveedoresService } from '../proveedores/proveedores.service.js'
 import { clientesService } from '../clientes/clientes.service.js'
 import { articulosService } from '../articulos/articulos.service.js'
+import { productosService } from '../productos/productos.service.js'
 
 export const importarController = {
 
@@ -21,6 +22,12 @@ export const importarController = {
   async articulos(req: Request, res: Response): Promise<void> {
     const registros = importRequestSchema.parse(req.body)
     const resultado = await articulosService.importar(registros)
+    res.json({ data: resultado })
+  },
+
+  async productos(req: Request, res: Response): Promise<void> {
+    const registros = importRequestSchema.parse(req.body)
+    const resultado = await productosService.importar(registros)
     res.json({ data: resultado })
   },
 }

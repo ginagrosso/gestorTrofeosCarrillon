@@ -11,5 +11,6 @@ router.use(authenticate)
 router.post('/proveedores', asyncHandler(importarController.proveedores))
 router.post('/clientes',    asyncHandler(importarController.clientes))
 router.post('/articulos',   asyncHandler(importarController.articulos))
+router.post('/productos',   asyncHandler(importarController.productos))
 
 export { router as importarRouter }

@@ -7,7 +7,6 @@ import ProveedoresPage from '@/pages/proveedores/ProveedoresPage'
 import ClientesPage from '@/pages/clientes/ClientesPage'
 import ProductosPage from '@/pages/productos/ProductosPage'
 import VentasPage from '@/pages/ventas/VentasPage'
-import ImportarExportarPage from '@/pages/importar-exportar/ImportarExportarPage'
 
 const router = createBrowserRouter([
   {
@@ -26,7 +25,6 @@ const router = createBrowserRouter([
           { path: '/clientes', element: <ClientesPage /> },
           { path: '/productos', element: <ProductosPage /> },
           { path: '/ventas', element: <VentasPage /> },
-          { path: '/importar-exportar', element: <ImportarExportarPage /> },
         ],
       },
     ],
