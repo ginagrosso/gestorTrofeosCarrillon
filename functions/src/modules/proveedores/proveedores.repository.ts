@@ -56,4 +56,14 @@ export const proveedoresRepository = {
       updatedAt: Timestamp.now(),
     })
   },
+
+  async upsertByNombre(data: InsertProveedor): Promise<{ proveedor: Proveedor; creado: boolean }> {
+    const existente = await this.findByNombre(data.nombre)
+
+    if (existente) {
+      return { proveedor: await this.update(existente.id, data), creado: false }
+    }
+
+    return { proveedor: await this.create(data), creado: true }
+  },
 }

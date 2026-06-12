@@ -1,6 +1,8 @@
 import { AppError } from '../../shared/lib/app-error.js'
 import { proveedoresRepository } from './proveedores.repository.js'
+import { insertProveedorSchema } from './proveedores.schema.js'
 import type { InsertProveedor, UpdateProveedor, Proveedor } from './proveedores.schema.js'
+import type { ImportResult } from '../../shared/lib/import-result.js'
 
 export const proveedoresService = {
 
@@ -26,5 +28,27 @@ export const proveedoresService = {
   async delete(id: string): Promise<void> {
     await this.getById(id) // lanza 404 si no existe
     await proveedoresRepository.softDelete(id)
+  },
+
+  async importar(registros: unknown[]): Promise<ImportResult> {
+    const resultado: ImportResult = { creados: 0, actualizados: 0, errores: [] }
+
+    for (const [index, registro] of registros.entries()) {
+      const parsed = insertProveedorSchema.safeParse(registro)
+
+      if (!parsed.success) {
+        resultado.errores.push({
+          fila: index + 1,
+          error: parsed.error.issues.map(issue => issue.message).join('; '),
+        })
+        continue
+      }
+
+      const { creado } = await proveedoresRepository.upsertByNombre(parsed.data)
+      if (creado) resultado.creados++
+      else resultado.actualizados++
+    }
+
+    return resultado
   },
 }
