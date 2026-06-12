@@ -1,6 +1,8 @@
 import { db } from '../../shared/lib/firebase-admin.js'
 import { COLLECTIONS } from '../../shared/lib/collections.js'
+import { commitInBatches } from '../../shared/lib/firestore-batch.js'
 import { Timestamp } from 'firebase-admin/firestore'
+import type { DocumentReference, WriteBatch } from 'firebase-admin/firestore'
 import type { Articulo, InsertArticulo, UpdateArticulo } from './articulos.schema.js'
 
 export const articulosRepository = {
@@ -17,17 +19,6 @@ export const articulosRepository = {
     const doc = await db.collection(COLLECTIONS.ARTICULOS).doc(id).get()
     if (!doc.exists || doc.data()?.deletedAt !== null) return null
     return { id: doc.id, ...doc.data() } as Articulo
-  },
-
-  async findByCodigo(codigo: string): Promise<Articulo | null> {
-    const snap = await db.collection(COLLECTIONS.ARTICULOS)
-      .where('codigo', '==', codigo)
-      .where('deletedAt', '==', null)
-      .limit(1)
-      .get()
-
-    if (snap.empty) return null
-    return { id: snap.docs[0].id, ...snap.docs[0].data() } as Articulo
   },
 
   async create(data: InsertArticulo): Promise<Articulo> {
@@ -50,13 +41,39 @@ export const articulosRepository = {
     return this.findById(id) as Promise<Articulo>
   },
 
-  async upsertByCodigo(data: InsertArticulo): Promise<{ articulo: Articulo; creado: boolean }> {
-    const existente = await this.findByCodigo(data.codigo)
+  /**
+   * Crea/actualiza muchos artículos por código en lotes (Firestore WriteBatch).
+   * Evita N+1 queries: precarga los existentes con una sola consulta.
+   */
+  async upsertManyByCodigo(items: InsertArticulo[]): Promise<{ creados: number; actualizados: number }> {
+    const existentes = await this.findAll()
+    const refsByCodigo = new Map(
+      existentes.map(a => [a.codigo, db.collection(COLLECTIONS.ARTICULOS).doc(a.id)]),
+    )
 
-    if (existente) {
-      return { articulo: await this.update(existente.id, data), creado: false }
+    const pendientes = new Map<string, { ref: DocumentReference; data: InsertArticulo; creado: boolean }>()
+    for (const data of items) {
+      const refExistente = pendientes.get(data.codigo)?.ref ?? refsByCodigo.get(data.codigo)
+      const ref = refExistente ?? db.collection(COLLECTIONS.ARTICULOS).doc()
+      pendientes.set(data.codigo, { ref, data, creado: !refExistente })
     }
 
-    return { articulo: await this.create(data), creado: true }
+    const now = Timestamp.now()
+    let creados = 0
+    let actualizados = 0
+    const writes: ((batch: WriteBatch) => void)[] = []
+
+    for (const { ref, data, creado } of pendientes.values()) {
+      if (creado) {
+        creados++
+        writes.push(batch => batch.set(ref, { ...data, createdAt: now, updatedAt: now, deletedAt: null }))
+      } else {
+        actualizados++
+        writes.push(batch => batch.update(ref, { ...data, updatedAt: now }))
+      }
+    }
+
+    await commitInBatches(writes)
+    return { creados, actualizados }
   },
 }

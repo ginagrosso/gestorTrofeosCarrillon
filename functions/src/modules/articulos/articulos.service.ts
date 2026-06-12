@@ -1,7 +1,7 @@
 import { articulosRepository } from './articulos.repository.js'
 import { proveedoresRepository } from '../proveedores/proveedores.repository.js'
 import { importArticuloRowSchema } from './articulos.schema.js'
-import type { Articulo } from './articulos.schema.js'
+import type { Articulo, InsertArticulo } from './articulos.schema.js'
 import type { ImportResult } from '../../shared/lib/import-result.js'
 
 export const articulosService = {
@@ -13,6 +13,10 @@ export const articulosService = {
   async importar(registros: unknown[]): Promise<ImportResult> {
     const resultado: ImportResult = { creados: 0, actualizados: 0, errores: [] }
 
+    const proveedores = await proveedoresRepository.findAll()
+    const proveedorPorNombre = new Map(proveedores.map(p => [p.nombre, p]))
+
+    const validos: InsertArticulo[] = []
     for (const [index, registro] of registros.entries()) {
       const fila = index + 1
       const parsed = importArticuloRowSchema.safeParse(registro)
@@ -26,17 +30,19 @@ export const articulosService = {
       }
 
       const { proveedorNombre, ...articuloData } = parsed.data
-      const proveedor = await proveedoresRepository.findByNombre(proveedorNombre)
+      const proveedor = proveedorPorNombre.get(proveedorNombre)
 
       if (!proveedor) {
         resultado.errores.push({ fila, error: `No se encontró el proveedor "${proveedorNombre}"` })
         continue
       }
 
-      const { creado } = await articulosRepository.upsertByCodigo({ ...articuloData, proveedorId: proveedor.id })
-      if (creado) resultado.creados++
-      else resultado.actualizados++
+      validos.push({ ...articuloData, proveedorId: proveedor.id })
     }
+
+    const { creados, actualizados } = await articulosRepository.upsertManyByCodigo(validos)
+    resultado.creados = creados
+    resultado.actualizados = actualizados
 
     return resultado
   },

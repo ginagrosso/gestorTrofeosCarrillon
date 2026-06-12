@@ -1,6 +1,6 @@
 import { clientesRepository } from './clientes.repository.js'
 import { insertClienteSchema } from './clientes.schema.js'
-import type { Cliente } from './clientes.schema.js'
+import type { Cliente, InsertCliente } from './clientes.schema.js'
 import type { ImportResult } from '../../shared/lib/import-result.js'
 
 export const clientesService = {
@@ -12,6 +12,7 @@ export const clientesService = {
   async importar(registros: unknown[]): Promise<ImportResult> {
     const resultado: ImportResult = { creados: 0, actualizados: 0, errores: [] }
 
+    const validos: InsertCliente[] = []
     for (const [index, registro] of registros.entries()) {
       const parsed = insertClienteSchema.safeParse(registro)
 
@@ -23,10 +24,12 @@ export const clientesService = {
         continue
       }
 
-      const { creado } = await clientesRepository.upsertByNombre(parsed.data)
-      if (creado) resultado.creados++
-      else resultado.actualizados++
+      validos.push(parsed.data)
     }
+
+    const { creados, actualizados } = await clientesRepository.upsertManyByNombre(validos)
+    resultado.creados = creados
+    resultado.actualizados = actualizados
 
     return resultado
   },

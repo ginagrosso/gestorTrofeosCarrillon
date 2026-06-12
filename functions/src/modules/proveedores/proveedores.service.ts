@@ -33,6 +33,7 @@ export const proveedoresService = {
   async importar(registros: unknown[]): Promise<ImportResult> {
     const resultado: ImportResult = { creados: 0, actualizados: 0, errores: [] }
 
+    const validos: InsertProveedor[] = []
     for (const [index, registro] of registros.entries()) {
       const parsed = insertProveedorSchema.safeParse(registro)
 
@@ -44,10 +45,12 @@ export const proveedoresService = {
         continue
       }
 
-      const { creado } = await proveedoresRepository.upsertByNombre(parsed.data)
-      if (creado) resultado.creados++
-      else resultado.actualizados++
+      validos.push(parsed.data)
     }
+
+    const { creados, actualizados } = await proveedoresRepository.upsertManyByNombre(validos)
+    resultado.creados = creados
+    resultado.actualizados = actualizados
 
     return resultado
   },

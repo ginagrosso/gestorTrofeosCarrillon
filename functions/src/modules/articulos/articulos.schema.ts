@@ -4,12 +4,12 @@ import { Timestamp } from 'firebase-admin/firestore'
 export const insertArticuloSchema = z.object({
   codigo:       z.string().min(1, 'El código es obligatorio').max(50),
   descripcion:  z.string().min(1, 'La descripción es obligatoria').max(300),
-  precioCosto:  z.number().positive(),
+  precioCosto:  z.number().nonnegative(),
   porcIva:      z.number().nonnegative(),
-  precioVenta:  z.number().positive(),
+  precioVenta:  z.number().nonnegative(),
   proveedorId:  z.string().min(1),
   unidad:       z.string().max(20).default('unidad'),
-  stock:        z.number().int().min(0).default(0),
+  stock:        z.number().int().default(0),
 })
 
 export const updateArticuloSchema = insertArticuloSchema.partial()

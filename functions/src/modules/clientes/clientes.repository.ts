@@ -1,6 +1,8 @@
 import { db } from '../../shared/lib/firebase-admin.js'
 import { COLLECTIONS } from '../../shared/lib/collections.js'
+import { commitInBatches } from '../../shared/lib/firestore-batch.js'
 import { Timestamp } from 'firebase-admin/firestore'
+import type { DocumentReference, WriteBatch } from 'firebase-admin/firestore'
 import type { Cliente, InsertCliente, UpdateCliente } from './clientes.schema.js'
 
 export const clientesRepository = {
@@ -17,17 +19,6 @@ export const clientesRepository = {
     const doc = await db.collection(COLLECTIONS.CLIENTES).doc(id).get()
     if (!doc.exists || doc.data()?.deletedAt !== null) return null
     return { id: doc.id, ...doc.data() } as Cliente
-  },
-
-  async findByNombre(nombre: string): Promise<Cliente | null> {
-    const snap = await db.collection(COLLECTIONS.CLIENTES)
-      .where('nombre', '==', nombre)
-      .where('deletedAt', '==', null)
-      .limit(1)
-      .get()
-
-    if (snap.empty) return null
-    return { id: snap.docs[0].id, ...snap.docs[0].data() } as Cliente
   },
 
   async create(data: InsertCliente): Promise<Cliente> {
@@ -50,13 +41,39 @@ export const clientesRepository = {
     return this.findById(id) as Promise<Cliente>
   },
 
-  async upsertByNombre(data: InsertCliente): Promise<{ cliente: Cliente; creado: boolean }> {
-    const existente = await this.findByNombre(data.nombre)
+  /**
+   * Crea/actualiza muchos clientes por nombre en lotes (Firestore WriteBatch).
+   * Evita N+1 queries: precarga los existentes con una sola consulta.
+   */
+  async upsertManyByNombre(items: InsertCliente[]): Promise<{ creados: number; actualizados: number }> {
+    const existentes = await this.findAll()
+    const refsByNombre = new Map(
+      existentes.map(c => [c.nombre, db.collection(COLLECTIONS.CLIENTES).doc(c.id)]),
+    )
 
-    if (existente) {
-      return { cliente: await this.update(existente.id, data), creado: false }
+    const pendientes = new Map<string, { ref: DocumentReference; data: InsertCliente; creado: boolean }>()
+    for (const data of items) {
+      const refExistente = pendientes.get(data.nombre)?.ref ?? refsByNombre.get(data.nombre)
+      const ref = refExistente ?? db.collection(COLLECTIONS.CLIENTES).doc()
+      pendientes.set(data.nombre, { ref, data, creado: !refExistente })
     }
 
-    return { cliente: await this.create(data), creado: true }
+    const now = Timestamp.now()
+    let creados = 0
+    let actualizados = 0
+    const writes: ((batch: WriteBatch) => void)[] = []
+
+    for (const { ref, data, creado } of pendientes.values()) {
+      if (creado) {
+        creados++
+        writes.push(batch => batch.set(ref, { ...data, createdAt: now, updatedAt: now, deletedAt: null }))
+      } else {
+        actualizados++
+        writes.push(batch => batch.update(ref, { ...data, updatedAt: now }))
+      }
+    }
+
+    await commitInBatches(writes)
+    return { creados, actualizados }
   },
 }
