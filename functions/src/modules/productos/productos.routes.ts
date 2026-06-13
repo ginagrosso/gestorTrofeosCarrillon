@@ -8,6 +8,10 @@ const router = Router()
 // Todas las rutas requieren autenticación
 router.use(authenticate)
 
-router.get('/', asyncHandler(productosController.getAll))
+router.get('/',       asyncHandler(productosController.getAll))
+router.get('/:id',    asyncHandler(productosController.getById))
+router.post('/',      asyncHandler(productosController.create))
+router.patch('/:id',  asyncHandler(productosController.update))
+router.delete('/:id', asyncHandler(productosController.delete))
 
 export { router as productosRouter }

@@ -1,13 +1,34 @@
+import { AppError } from '../../shared/lib/app-error.js'
 import { productosRepository } from './productos.repository.js'
 import { proveedoresRepository } from '../proveedores/proveedores.repository.js'
 import { importProductoRowSchema } from './productos.schema.js'
-import type { Producto, InsertProducto } from './productos.schema.js'
+import type { Producto, InsertProducto, UpdateProducto } from './productos.schema.js'
 import type { ImportResult } from '../../shared/lib/import-result.js'
 
 export const productosService = {
 
   async getAll(): Promise<Producto[]> {
     return productosRepository.findAll()
+  },
+
+  async getById(id: string): Promise<Producto> {
+    const producto = await productosRepository.findById(id)
+    if (!producto) throw new AppError(404, 'Producto no encontrado')
+    return producto
+  },
+
+  async create(data: InsertProducto): Promise<Producto> {
+    return productosRepository.create(data)
+  },
+
+  async update(id: string, data: UpdateProducto): Promise<Producto> {
+    await this.getById(id) // lanza 404 si no existe
+    return productosRepository.update(id, data)
+  },
+
+  async delete(id: string): Promise<void> {
+    await this.getById(id) // lanza 404 si no existe
+    await productosRepository.softDelete(id)
   },
 
   async importar(registros: unknown[]): Promise<ImportResult> {
