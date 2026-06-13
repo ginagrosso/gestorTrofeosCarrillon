@@ -1,13 +1,34 @@
+import { AppError } from '../../shared/lib/app-error.js'
 import { articulosRepository } from './articulos.repository.js'
 import { proveedoresRepository } from '../proveedores/proveedores.repository.js'
 import { importArticuloRowSchema } from './articulos.schema.js'
-import type { Articulo, InsertArticulo } from './articulos.schema.js'
+import type { Articulo, InsertArticulo, UpdateArticulo } from './articulos.schema.js'
 import type { ImportResult } from '../../shared/lib/import-result.js'
 
 export const articulosService = {
 
   async getAll(): Promise<Articulo[]> {
     return articulosRepository.findAll()
+  },
+
+  async getById(id: string): Promise<Articulo> {
+    const articulo = await articulosRepository.findById(id)
+    if (!articulo) throw new AppError(404, 'Artículo no encontrado')
+    return articulo
+  },
+
+  async create(data: InsertArticulo): Promise<Articulo> {
+    return articulosRepository.create(data)
+  },
+
+  async update(id: string, data: UpdateArticulo): Promise<Articulo> {
+    await this.getById(id) // lanza 404 si no existe
+    return articulosRepository.update(id, data)
+  },
+
+  async delete(id: string): Promise<void> {
+    await this.getById(id) // lanza 404 si no existe
+    await articulosRepository.softDelete(id)
   },
 
   async importar(registros: unknown[]): Promise<ImportResult> {

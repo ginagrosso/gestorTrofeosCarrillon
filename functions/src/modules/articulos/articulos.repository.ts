@@ -41,6 +41,13 @@ export const articulosRepository = {
     return this.findById(id) as Promise<Articulo>
   },
 
+  async softDelete(id: string): Promise<void> {
+    await db.collection(COLLECTIONS.ARTICULOS).doc(id).update({
+      deletedAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    })
+  },
+
   /**
    * Crea/actualiza muchos artículos por código en lotes (Firestore WriteBatch).
    * Evita N+1 queries: precarga los existentes con una sola consulta.
