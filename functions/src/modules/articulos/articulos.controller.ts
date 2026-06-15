@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express'
-import { insertArticuloSchema, updateArticuloSchema, articuloParamsSchema } from './articulos.schema.js'
+import { insertArticuloSchema, updateArticuloSchema, articuloParamsSchema, actualizarPreciosPorProveedorSchema } from './articulos.schema.js'
 import { articulosService } from './articulos.service.js'
 
 export const articulosController = {
@@ -32,5 +32,11 @@ export const articulosController = {
     const { id } = articuloParamsSchema.parse(req.params)
     await articulosService.delete(id)
     res.status(204).send()
+  },
+
+  async actualizarPreciosPorProveedor(req: Request, res: Response): Promise<void> {
+    const { proveedorId, porcentaje } = actualizarPreciosPorProveedorSchema.parse(req.body)
+    const resultado = await articulosService.actualizarPreciosPorProveedor(proveedorId, porcentaje)
+    res.json({ data: resultado })
   },
 }

@@ -1,1 +1,5 @@
+export { default as ProductoForm } from './ui/ProductoForm'
+export { default as ProductoArticulosForm } from './ui/ProductoArticulosForm'
 export { useProductos } from './hooks/useProductos'
+export { useProductoArticulos, useAllProductoArticulos } from './hooks/useProductoArticulos'
+export { useCreateProducto, useUpdateProducto, useDeleteProducto, useReplaceProductoArticulos } from './hooks/useProductosMutations'

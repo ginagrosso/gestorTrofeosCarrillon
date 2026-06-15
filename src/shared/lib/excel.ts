@@ -73,10 +73,14 @@ export async function parseExcelFile<T>(file: File, columns: ColumnMap<T>): Prom
   )
   if (headerRowIndex === -1) throw new Error('No se encontró la fila de encabezados')
 
-  const headers = rows[headerRowIndex].map(cell => (cell === null ? '' : String(cell)))
+  // Algunas columnas del legacy no tienen encabezado de texto (ej. Rubro/Subrubro
+  // en exportacionProductosCarrillon.xls): se referencian por posición ("Columna N").
+  const headers = rows[headerRowIndex].map((cell, i) => (
+    cell === null || cell === '' ? `Columna ${i + 1}` : String(cell)
+  ))
   return rows.slice(headerRowIndex + 1)
     .filter(row => row.some(cell => cell !== null && cell !== ''))
     .map(row => Object.fromEntries(
-      headers.map((header, i) => [header, row[i] ?? null]).filter(([header]) => header !== ''),
+      headers.map((header, i) => [header, row[i] ?? null]),
     ))
 }

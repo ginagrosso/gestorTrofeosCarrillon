@@ -81,7 +81,7 @@ export const articuloColumns: ColumnMap<ArticuloExport> = {
 }
 
 // La importación de productos resuelve el proveedor por nombre (ver importProductoRowSchema).
-export type ProductoExport = Producto & { proveedorNombre: string }
+export type ProductoExport = Producto & { proveedorNombre: string; materiales: string }
 
 export const productoColumns: ColumnMap<ProductoExport> = {
   id:              { header: 'Id',           export: p => p.id },
@@ -91,7 +91,11 @@ export const productoColumns: ColumnMap<ProductoExport> = {
   precioVenta:     { header: 'Precio Venta', export: p => p.precioVenta,     import: toNumber },
   porcIva:         { header: '% IVA', aliases: ['Porc Iva'], export: p => p.porcIva, import: toNumber },
   stockActual:     { header: 'Stock', aliases: ['Stock Actual'], export: p => p.stockActual, import: toNumber },
-  categoria:       { header: 'Categoría', aliases: ['Categoria'], export: p => p.categoria ?? '', import: toOptionalString },
-  subcategoria:    { header: 'Subcategoría', aliases: ['Subcategoria'], export: p => p.subcategoria ?? '', import: toOptionalString },
+  // "Columna 8"/"Columna 9": en exportacionProductosCarrillon.xls estas columnas
+  // (Rubro/Subrubro) no tienen encabezado de texto, se referencian por posición.
+  categoria:       { header: 'Categoría', aliases: ['Categoria', 'Columna 8'], export: p => p.categoria ?? '', import: toOptionalString },
+  subcategoria:    { header: 'Subcategoría', aliases: ['Subcategoria', 'Columna 9'], export: p => p.subcategoria ?? '', import: toOptionalString },
   proveedorNombre: { header: 'Proveedor',    export: p => p.proveedorNombre, import: v => String(v).trim() },
+  // Lista de materiales (BOM): solo exportación, se gestiona desde la Ficha de Producto.
+  materiales:      { header: 'Lista de materiales', export: p => p.materiales },
 }

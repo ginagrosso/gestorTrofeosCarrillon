@@ -1,5 +1,11 @@
 import { z } from 'zod'
 
+// Representación serializada de un Timestamp de Firestore tal como llega por la API.
+export interface FirestoreTimestamp {
+  _seconds: number
+  _nanoseconds: number
+}
+
 export const insertProveedorSchema = z.object({
   nombre:     z.string().min(1, 'El nombre es obligatorio').max(200),
   contacto:   z.string().max(200).optional(),
@@ -67,11 +73,22 @@ export const updateArticuloSchema = insertArticuloSchema.partial()
 
 export const articuloSchema = insertArticuloSchema.extend({
   id: z.string(),
+  precioActualizadoAt: z.custom<FirestoreTimestamp | null>(),
 })
 
 export type InsertArticulo = z.infer<typeof insertArticuloSchema>
 export type UpdateArticulo = z.infer<typeof updateArticuloSchema>
 export type Articulo       = z.infer<typeof articuloSchema>
+
+// Actualización masiva de precios por proveedor (% único sobre precioCosto)
+export const actualizarPreciosPorProveedorSchema = z.object({
+  proveedorId: z.string().min(1, 'Seleccioná un proveedor'),
+  porcentaje: z.number()
+    .refine(v => v !== 0, 'El porcentaje no puede ser 0')
+    .refine(v => v >= -100, 'El porcentaje no puede ser menor a -100'),
+})
+
+export type ActualizarPreciosPorProveedor = z.infer<typeof actualizarPreciosPorProveedorSchema>
 
 export const insertProductoSchema = z.object({
   codigo:       z.string().min(1, 'El código es obligatorio').max(50),
@@ -94,6 +111,27 @@ export const productoSchema = insertProductoSchema.extend({
 export type InsertProducto = z.infer<typeof insertProductoSchema>
 export type UpdateProducto = z.infer<typeof updateProductoSchema>
 export type Producto       = z.infer<typeof productoSchema>
+
+export const productoArticuloItemSchema = z.object({
+  articuloId: z.string().min(1, 'Seleccioná un artículo'),
+  cantidad:   z.number().positive('La cantidad debe ser mayor a 0'),
+})
+
+export const replaceProductoArticulosSchema = z.object({
+  items: z.array(productoArticuloItemSchema),
+}).refine(
+  data => new Set(data.items.map(item => item.articuloId)).size === data.items.length,
+  { message: 'No se puede repetir el mismo artículo en la lista de materiales', path: ['items'] },
+)
+
+export type ProductoArticuloItem     = z.infer<typeof productoArticuloItemSchema>
+export type ReplaceProductoArticulos = z.infer<typeof replaceProductoArticulosSchema>
+
+export interface ProductoArticulo extends ProductoArticuloItem {
+  id:         string
+  productoId: string
+  articulo:   Articulo | null
+}
 
 export interface ImportResult {
   creados: number

@@ -21,6 +21,15 @@ export const articulosRepository = {
     return { id: doc.id, ...doc.data() } as Articulo
   },
 
+  async findByIds(ids: string[]): Promise<Articulo[]> {
+    if (ids.length === 0) return []
+    const refs = ids.map(id => db.collection(COLLECTIONS.ARTICULOS).doc(id))
+    const snaps = await db.getAll(...refs)
+    return snaps
+      .filter(snap => snap.exists && snap.data()?.deletedAt === null)
+      .map(snap => ({ id: snap.id, ...snap.data() } as Articulo))
+  },
+
   async create(data: InsertArticulo): Promise<Articulo> {
     const now = Timestamp.now()
     const ref = await db.collection(COLLECTIONS.ARTICULOS).add({
@@ -28,16 +37,24 @@ export const articulosRepository = {
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
+      precioActualizadoAt: null,
     })
     const snap = await ref.get()
     return { id: snap.id, ...snap.data() } as Articulo
   },
 
   async update(id: string, data: UpdateArticulo): Promise<Articulo> {
-    await db.collection(COLLECTIONS.ARTICULOS).doc(id).update({
-      ...data,
-      updatedAt: Timestamp.now(),
-    })
+    const now = Timestamp.now()
+    const cambios: Record<string, unknown> = { ...data, updatedAt: now }
+
+    if (data.precioCosto !== undefined) {
+      const actual = await this.findById(id)
+      if (actual && actual.precioCosto !== data.precioCosto) {
+        cambios.precioActualizadoAt = now
+      }
+    }
+
+    await db.collection(COLLECTIONS.ARTICULOS).doc(id).update(cambios)
     return this.findById(id) as Promise<Articulo>
   },
 
@@ -82,5 +99,29 @@ export const articulosRepository = {
 
     await commitInBatches(writes)
     return { creados, actualizados }
+  },
+
+  /**
+   * Aplica un % de aumento (o descuento) al precioCosto de todos los
+   * artículos de un proveedor. Devuelve los artículos actualizados.
+   */
+  async bulkUpdatePrecioPorProveedor(proveedorId: string, porcentaje: number): Promise<Articulo[]> {
+    const articulos = (await this.findAll()).filter(a => a.proveedorId === proveedorId)
+    if (articulos.length === 0) return []
+
+    const now = Timestamp.now()
+    const factor = 1 + porcentaje / 100
+    const actualizados: Articulo[] = []
+    const writes: ((batch: WriteBatch) => void)[] = []
+
+    for (const articulo of articulos) {
+      const precioCosto = Math.round(articulo.precioCosto * factor * 100) / 100
+      const ref = db.collection(COLLECTIONS.ARTICULOS).doc(articulo.id)
+      writes.push(batch => batch.update(ref, { precioCosto, precioActualizadoAt: now, updatedAt: now }))
+      actualizados.push({ ...articulo, precioCosto, precioActualizadoAt: now, updatedAt: now })
+    }
+
+    await commitInBatches(writes)
+    return actualizados
   },
 }

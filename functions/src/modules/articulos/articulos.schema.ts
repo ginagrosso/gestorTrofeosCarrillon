@@ -19,15 +19,26 @@ export const articuloParamsSchema = z.object({
 })
 
 export const articuloSchema = insertArticuloSchema.extend({
-  id:        z.string(),
-  createdAt: z.instanceof(Timestamp),
-  updatedAt: z.instanceof(Timestamp),
-  deletedAt: z.instanceof(Timestamp).nullable(),
+  id:                 z.string(),
+  createdAt:          z.instanceof(Timestamp),
+  updatedAt:          z.instanceof(Timestamp),
+  deletedAt:          z.instanceof(Timestamp).nullable(),
+  precioActualizadoAt: z.instanceof(Timestamp).nullable(),
 })
 
 export type InsertArticulo = z.infer<typeof insertArticuloSchema>
 export type UpdateArticulo = z.infer<typeof updateArticuloSchema>
 export type Articulo       = z.infer<typeof articuloSchema>
+
+// Actualización masiva de precios por proveedor (% único sobre precioCosto)
+export const actualizarPreciosPorProveedorSchema = z.object({
+  proveedorId: z.string().min(1),
+  porcentaje: z.number()
+    .refine(v => v !== 0, 'El porcentaje no puede ser 0')
+    .refine(v => v >= -100, 'El porcentaje no puede ser menor a -100'),
+})
+
+export type ActualizarPreciosPorProveedor = z.infer<typeof actualizarPreciosPorProveedorSchema>
 
 // Fila de importación: trae el nombre del proveedor en lugar de su id,
 // que se resuelve por búsqueda durante la importación.

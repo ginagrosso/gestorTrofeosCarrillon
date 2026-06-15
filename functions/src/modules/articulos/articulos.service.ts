@@ -1,6 +1,8 @@
 import { AppError } from '../../shared/lib/app-error.js'
 import { articulosRepository } from './articulos.repository.js'
 import { proveedoresRepository } from '../proveedores/proveedores.repository.js'
+import { proveedoresService } from '../proveedores/proveedores.service.js'
+import { productoArticulosRepository } from '../producto-articulos/producto-articulos.repository.js'
 import { importArticuloRowSchema } from './articulos.schema.js'
 import type { Articulo, InsertArticulo, UpdateArticulo } from './articulos.schema.js'
 import type { ImportResult } from '../../shared/lib/import-result.js'
@@ -29,6 +31,22 @@ export const articulosService = {
   async delete(id: string): Promise<void> {
     await this.getById(id) // lanza 404 si no existe
     await articulosRepository.softDelete(id)
+  },
+
+  async actualizarPreciosPorProveedor(proveedorId: string, porcentaje: number): Promise<{ articulosActualizados: number; productosActualizados: number }> {
+    await proveedoresService.getById(proveedorId) // lanza 404 si no existe
+
+    const articulosActualizados = await articulosRepository.bulkUpdatePrecioPorProveedor(proveedorId, porcentaje)
+
+    let productosActualizados = 0
+    if (articulosActualizados.length > 0) {
+      const lineas = await productoArticulosRepository.findByArticuloIds(articulosActualizados.map(a => a.id))
+      const productoIds = [...new Set(lineas.map(linea => linea.productoId))]
+      await productoArticulosRepository.recalcPrecioCostoForProductos(productoIds)
+      productosActualizados = productoIds.length
+    }
+
+    return { articulosActualizados: articulosActualizados.length, productosActualizados }
   },
 
   async importar(registros: unknown[]): Promise<ImportResult> {

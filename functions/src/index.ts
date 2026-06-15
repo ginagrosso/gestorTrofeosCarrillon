@@ -7,6 +7,7 @@ import { proveedoresRouter } from './modules/proveedores/proveedores.routes.js'
 import { clientesRouter } from './modules/clientes/clientes.routes.js'
 import { articulosRouter } from './modules/articulos/articulos.routes.js'
 import { productosRouter } from './modules/productos/productos.routes.js'
+import { productoArticulosRouter } from './modules/producto-articulos/producto-articulos.routes.js'
 import { importarRouter } from './modules/importar/importar.routes.js'
 
 // Para controlar costos: máximo de instancias concurrentes por función.
@@ -21,6 +22,7 @@ app.use('/v1/proveedores', proveedoresRouter)
 app.use('/v1/clientes', clientesRouter)
 app.use('/v1/articulos', articulosRouter)
 app.use('/v1/productos', productosRouter)
+app.use('/v1/producto-articulos', productoArticulosRouter)
 app.use('/v1/importar', importarRouter)
 
 app.use(errorHandler)

@@ -1,6 +1,7 @@
 import { AppError } from '../../shared/lib/app-error.js'
 import { productosRepository } from './productos.repository.js'
 import { proveedoresRepository } from '../proveedores/proveedores.repository.js'
+import { productoArticulosRepository } from '../producto-articulos/producto-articulos.repository.js'
 import { importProductoRowSchema } from './productos.schema.js'
 import type { Producto, InsertProducto, UpdateProducto } from './productos.schema.js'
 import type { ImportResult } from '../../shared/lib/import-result.js'
@@ -23,6 +24,14 @@ export const productosService = {
 
   async update(id: string, data: UpdateProducto): Promise<Producto> {
     await this.getById(id) // lanza 404 si no existe
+
+    if (data.precioCosto !== undefined) {
+      const bom = await productoArticulosRepository.findByProductoId(id)
+      if (bom.length > 0) {
+        throw new AppError(400, 'El costo de este producto se calcula automáticamente desde su lista de materiales')
+      }
+    }
+
     return productosRepository.update(id, data)
   },
 
