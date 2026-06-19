@@ -8,6 +8,10 @@ const router = Router()
 // Todas las rutas requieren autenticación
 router.use(authenticate)
 
-router.get('/', asyncHandler(clientesController.getAll))
+router.get('/',       asyncHandler(clientesController.getAll))
+router.get('/:id',    asyncHandler(clientesController.getById))
+router.post('/',      asyncHandler(clientesController.create))
+router.patch('/:id',  asyncHandler(clientesController.update))
+router.delete('/:id', asyncHandler(clientesController.delete))
 
 export { router as clientesRouter }

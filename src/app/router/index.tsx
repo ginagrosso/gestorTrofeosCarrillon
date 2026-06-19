@@ -5,6 +5,7 @@ import LoginPage from '@/pages/auth/LoginPage'
 import ArticulosPage from '@/pages/articulos/ArticulosPage'
 import ProveedoresPage from '@/pages/proveedores/ProveedoresPage'
 import ClientesPage from '@/pages/clientes/ClientesPage'
+import ClienteDetailPage from '@/pages/clientes/ClienteDetailPage'
 import ProductosPage from '@/pages/productos/ProductosPage'
 import VentasPage from '@/pages/ventas/VentasPage'
 
@@ -23,6 +24,7 @@ const router = createBrowserRouter([
           { path: '/articulos', element: <ArticulosPage /> },
           { path: '/proveedores', element: <ProveedoresPage /> },
           { path: '/clientes', element: <ClientesPage /> },
+          { path: '/clientes/:id', element: <ClienteDetailPage /> },
           { path: '/productos', element: <ProductosPage /> },
           { path: '/ventas', element: <VentasPage /> },
         ],

@@ -1,8 +1,7 @@
 import { AppError } from '../../shared/lib/app-error.js'
 import { productosRepository } from './productos.repository.js'
-import { proveedoresRepository } from '../proveedores/proveedores.repository.js'
 import { productoArticulosRepository } from '../producto-articulos/producto-articulos.repository.js'
-import { importProductoRowSchema } from './productos.schema.js'
+import { insertProductoSchema } from './productos.schema.js'
 import type { Producto, InsertProducto, UpdateProducto } from './productos.schema.js'
 import type { ImportResult } from '../../shared/lib/import-result.js'
 
@@ -43,14 +42,10 @@ export const productosService = {
   async importar(registros: unknown[]): Promise<ImportResult> {
     const resultado: ImportResult = { creados: 0, actualizados: 0, errores: [] }
 
-    const proveedores = await proveedoresRepository.findAll()
-    const proveedorPorNombre = new Map(proveedores.map(p => [p.nombre, p]))
-
     const validos: InsertProducto[] = []
     for (const [index, registro] of registros.entries()) {
       const fila = index + 1
-      const parsed = importProductoRowSchema.safeParse(registro)
-
+      const parsed = insertProductoSchema.safeParse(registro)
       if (!parsed.success) {
         resultado.errores.push({
           fila,
@@ -58,22 +53,12 @@ export const productosService = {
         })
         continue
       }
-
-      const { proveedorNombre, ...productoData } = parsed.data
-      const proveedor = proveedorPorNombre.get(proveedorNombre)
-
-      if (!proveedor) {
-        resultado.errores.push({ fila, error: `No se encontró el proveedor "${proveedorNombre}"` })
-        continue
-      }
-
-      validos.push({ ...productoData, proveedorId: proveedor.id })
+      validos.push(parsed.data)
     }
 
     const { creados, actualizados } = await productosRepository.upsertManyByCodigo(validos)
     resultado.creados = creados
     resultado.actualizados = actualizados
-
     return resultado
   },
 }

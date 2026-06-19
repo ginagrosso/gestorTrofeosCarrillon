@@ -3,15 +3,16 @@ import { Timestamp } from 'firebase-admin/firestore'
 
 export const insertClienteSchema = z.object({
   nombre:          z.string().min(1, 'El nombre es obligatorio').max(200),
-  situacionFiscal: z.string().max(100).optional(),
+  situacionFiscal: z.enum(['RESPONSABLE_INSCRIPTO', 'MONOTRIBUTO', 'EXENTO', 'CONSUMIDOR_FINAL']),
   tipoDoc:         z.enum(['CUIT', 'CUIL', 'DNI', 'CUE', 'CUI']),
   cuit:            z.string().max(20).optional(),
-  empresa:         z.enum(['M.E.P.B.', 'M.A.D.']).optional(),
-  rubro:           z.string().max(100).optional(),
   direccion:       z.string().max(300).optional(),
+  localidad:       z.string().max(100).optional(),
+  provincia:       z.string().max(100).optional(),
   telefono:        z.string().max(30).optional(),
   celular:         z.string().max(30).optional(),
-  email:           z.string().email('Email inválido').max(200).optional(),
+  email:           z.string().max(200).optional()
+    .refine(v => !v || z.string().email().safeParse(v).success, 'Email inválido'),
 })
 
 export const updateClienteSchema = insertClienteSchema.partial()

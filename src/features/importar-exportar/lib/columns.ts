@@ -33,11 +33,6 @@ const toSitIva = (value: unknown): string => {
   return SIT_IVA_ALIASES[texto] ?? SIT_IVA_BY_LABEL[texto] ?? texto
 }
 
-const toEmpresa = (value: unknown): string | undefined => {
-  const text = String(value).trim().replace(/\s+/g, '')
-  return text === '' ? undefined : text
-}
-
 export const proveedorColumns: ColumnMap<Proveedor> = {
   id:        { header: 'Id',           export: p => p.id },
   nombre:    { header: 'Nombre',        export: p => p.nombre,                 import: v => String(v).trim() },
@@ -53,16 +48,16 @@ export const proveedorColumns: ColumnMap<Proveedor> = {
 
 export const clienteColumns: ColumnMap<Cliente> = {
   id:              { header: 'Id',               export: c => c.id },
-  nombre:          { header: 'Nombre',           export: c => c.nombre,                 import: v => String(v).trim() },
-  situacionFiscal: { header: 'Situación Fiscal', export: c => c.situacionFiscal ?? '',  import: toOptionalString },
-  tipoDoc:         { header: 'Tipo Doc',         export: c => c.tipoDoc,                import: v => String(v).trim().toUpperCase() },
-  cuit:            { header: 'CUIT',             export: c => c.cuit ?? '',             import: toOptionalString },
-  empresa:         { header: 'Empresa',          export: c => c.empresa ?? '',          import: toEmpresa },
-  rubro:           { header: 'Rubro',            export: c => c.rubro ?? '',            import: toOptionalString },
-  direccion:       { header: 'Dirección',        export: c => c.direccion ?? '',        import: toOptionalString },
-  telefono:        { header: 'Teléfono',         export: c => c.telefono ?? '',         import: toOptionalString },
-  celular:         { header: 'Celular',          export: c => c.celular ?? '',          import: toOptionalString },
-  email:           { header: 'Email', aliases: ['e Mail'], export: c => c.email ?? '',  import: toEmail },
+  nombre:          { header: 'Nombre',           export: c => c.nombre,                          import: v => String(v).trim() },
+  situacionFiscal: { header: 'Situación Fiscal', export: c => SIT_IVA_LABELS[c.situacionFiscal], import: toSitIva },
+  tipoDoc:         { header: 'Tipo Doc',         export: c => c.tipoDoc,                         import: v => String(v).trim().toUpperCase() },
+  cuit:            { header: 'CUIT',             export: c => c.cuit ?? '',                      import: toOptionalString },
+  direccion:       { header: 'Dirección',        export: c => c.direccion ?? '',  import: toOptionalString },
+  localidad:       { header: 'Localidad',        export: c => c.localidad ?? '',  import: toOptionalString },
+  provincia:       { header: 'Provincia',        export: c => c.provincia ?? '',  import: toOptionalString },
+  telefono:        { header: 'Teléfono',         export: c => c.telefono ?? '',   import: toOptionalString },
+  celular:         { header: 'Celular',          export: c => c.celular ?? '',                   import: toOptionalString },
+  email:           { header: 'Email', aliases: ['e Mail'], export: c => c.email ?? '',           import: toEmail },
 }
 
 // La importación de artículos resuelve el proveedor por nombre (ver importArticuloRowSchema).
@@ -80,8 +75,7 @@ export const articuloColumns: ColumnMap<ArticuloExport> = {
   stock:           { header: 'Stock', aliases: ['Stock Actual'], export: a => a.stock, import: toNumber },
 }
 
-// La importación de productos resuelve el proveedor por nombre (ver importProductoRowSchema).
-export type ProductoExport = Producto & { proveedorNombre: string; materiales: string }
+export type ProductoExport = Producto & { materiales: string }
 
 export const productoColumns: ColumnMap<ProductoExport> = {
   id:              { header: 'Id',           export: p => p.id },
@@ -95,7 +89,6 @@ export const productoColumns: ColumnMap<ProductoExport> = {
   // (Rubro/Subrubro) no tienen encabezado de texto, se referencian por posición.
   categoria:       { header: 'Categoría', aliases: ['Categoria', 'Columna 8'], export: p => p.categoria ?? '', import: toOptionalString },
   subcategoria:    { header: 'Subcategoría', aliases: ['Subcategoria', 'Columna 9'], export: p => p.subcategoria ?? '', import: toOptionalString },
-  proveedorNombre: { header: 'Proveedor',    export: p => p.proveedorNombre, import: v => String(v).trim() },
   // Lista de materiales (BOM): solo exportación, se gestiona desde la Ficha de Producto.
   materiales:      { header: 'Lista de materiales', export: p => p.materiales },
 }

@@ -84,10 +84,22 @@ sit_iva, telefono1, telefono2, rubro
 
 ### clientes (~1000 registros)
 ```
-id, nombre, situacion_fiscal, tipo_doc (CUIT|CUIL|DNI|CUE|CUI),
-cuit, empresa (M.E.P.B.|M.A.D., opcional), rubro, direccion,
-telefono, celular, email
+id              string    — Firestore auto-id
+nombre          string    requerido
+situacionFiscal enum      requerido — RESPONSABLE_INSCRIPTO | MONOTRIBUTO | EXENTO | CONSUMIDOR_FINAL (mismos valores/labels que sitIva de proveedores)
+tipoDoc         enum      requerido — CUIT | CUIL | DNI | CUE | CUI
+cuit            string    opcional — número de documento (según tipoDoc)
+direccion       string    opcional
+telefono        string    opcional
+celular         string    opcional — usado para el botón de WhatsApp
+email           string    opcional
+createdAt       timestamp requerido — auto
+updatedAt       timestamp requerido — auto
+deletedAt       timestamp nullable, default null — soft delete
 ```
+- El Excel legacy (`exportarClienteCarrillon.xls`, ~1026 filas) trae además las columnas `Empresa` (M.E.P.B./M.A.D.) y `Rubro` (códigos `01-`..`18-` sin significado claro): son datos del sistema viejo sin uso real, no forman parte del modelo y se ignoran al importar.
+- `Situación Fiscal` del Excel ("EXENTO EN IVA", "RESPONSABLE INSCRIPTO", "CONSUMIDOR FINAL", "MONOTRIBUTO") se mapea al enum `situacionFiscal` igual que `sitIva` de proveedores (reutiliza `SIT_IVA_LABELS`).
+- Import/export Excel: upsert por `nombre` (no hay campo `codigo` único como en artículos/productos).
 
 ### articulos (piezas individuales — ~2375 registros)
 ```

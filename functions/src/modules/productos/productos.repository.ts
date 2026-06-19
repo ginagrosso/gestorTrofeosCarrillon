@@ -60,9 +60,8 @@ export const productosRepository = {
 
     const pendientes = new Map<string, { ref: DocumentReference; data: InsertProducto; creado: boolean }>()
     for (const data of items) {
-      const refExistente = pendientes.get(data.codigo)?.ref ?? refsByCodigo.get(data.codigo)
-      const ref = refExistente ?? db.collection(COLLECTIONS.PRODUCTOS).doc()
-      pendientes.set(data.codigo, { ref, data, creado: !refExistente })
+      const ref = pendientes.get(data.codigo)?.ref ?? refsByCodigo.get(data.codigo) ?? db.collection(COLLECTIONS.PRODUCTOS).doc()
+      pendientes.set(data.codigo, { ref, data, creado: !refsByCodigo.has(data.codigo) })
     }
 
     const now = Timestamp.now()

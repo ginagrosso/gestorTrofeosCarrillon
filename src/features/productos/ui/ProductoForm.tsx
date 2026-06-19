@@ -3,16 +3,15 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { z } from 'zod'
 import { insertProductoSchema, type InsertProducto, type UpdateProducto, type Producto } from '@/shared/lib/types'
-import { useProveedores } from '@/features/proveedores'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
-import { Combobox } from '@/shared/ui/combobox'
 import { MoneyInput } from '@/shared/ui/money-input'
 import { formatMoney } from '@/shared/lib/money'
 import { useProductos } from '../hooks/useProductos'
 import { useProductoArticulos } from '../hooks/useProductoArticulos'
 import { useCreateProducto, useUpdateProducto } from '../hooks/useProductosMutations'
+import ProductoArticulosForm from './ProductoArticulosForm'
 
 const round = (value: number) => Math.round(value * 100) / 100
 // Precio Venta se muestra sin decimales: 0.5 redondea hacia arriba, por debajo hacia abajo.
@@ -26,13 +25,11 @@ interface ProductoFormProps {
 export default function ProductoForm({ producto, onSuccess }: ProductoFormProps) {
   const { mutate: createProducto, isPending: isCreating } = useCreateProducto()
   const { mutate: updateProducto, isPending: isUpdating } = useUpdateProducto()
-  const { data: proveedores } = useProveedores()
   const { data: productos } = useProductos()
   const { data: bom } = useProductoArticulos(producto?.id)
   const hasBom = (bom?.length ?? 0) > 0
   const bomTotal = round((bom ?? []).reduce((sum, item) => sum + item.cantidad * (item.articulo?.precioCosto ?? 0), 0))
   const isPending = isCreating || isUpdating
-  const proveedorOptions = (proveedores ?? []).map(proveedor => ({ value: proveedor.id, label: proveedor.nombre }))
   const categoriaOptions = [...new Set((productos ?? []).map(p => p.categoria).filter((c): c is string => !!c))].sort()
   const subcategoriaOptions = [...new Set((productos ?? []).map(p => p.subcategoria).filter((c): c is string => !!c))].sort()
 
@@ -44,7 +41,6 @@ export default function ProductoForm({ producto, onSuccess }: ProductoFormProps)
       precioCosto: 0,
       porcIva: 21,
       precioVenta: 0,
-      proveedorId: '',
       stockActual: 0,
       categoria: '',
       subcategoria: '',
@@ -87,6 +83,8 @@ export default function ProductoForm({ producto, onSuccess }: ProductoFormProps)
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="mt-4 flex flex-col gap-4">
+
+      {/* — Identificación — */}
       <div className="space-y-1">
         <Label htmlFor="codigo">Código</Label>
         <Input id="codigo" {...form.register('codigo')} />
@@ -101,72 +99,6 @@ export default function ProductoForm({ producto, onSuccess }: ProductoFormProps)
         {form.formState.errors.descripcion && (
           <p className="text-sm text-destructive">{form.formState.errors.descripcion.message}</p>
         )}
-      </div>
-
-      <div className="space-y-1">
-        <Label htmlFor="proveedorId">Proveedor</Label>
-        <Controller
-          name="proveedorId"
-          control={form.control}
-          render={({ field }) => (
-            <Combobox
-              id="proveedorId"
-              value={field.value}
-              onChange={field.onChange}
-              options={proveedorOptions}
-              placeholder="Seleccionar proveedor..."
-              searchPlaceholder="Buscar proveedor..."
-              emptyText="No se encontró el proveedor."
-            />
-          )}
-        />
-        {form.formState.errors.proveedorId && (
-          <p className="text-sm text-destructive">{form.formState.errors.proveedorId.message}</p>
-        )}
-      </div>
-
-      {!hasBom && (
-        <div className="space-y-1">
-          <Label htmlFor="precioCosto">Precio Costo</Label>
-          <Controller
-            name="precioCosto"
-            control={form.control}
-            render={({ field }) => (
-              <MoneyInput id="precioCosto" value={field.value ?? 0} onChange={field.onChange} />
-            )}
-          />
-          {form.formState.errors.precioCosto && (
-            <p className="text-sm text-destructive">{form.formState.errors.precioCosto.message}</p>
-          )}
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1">
-          <Label htmlFor="recargo">Recargo %</Label>
-          <Input
-            id="recargo"
-            type="number"
-            step="0.01"
-            value={recargo}
-            onChange={e => handleRecargoChange(Number(e.target.value))}
-          />
-          <p className="text-sm text-muted-foreground">Costo: ${formatMoney(precioCostoActual)}</p>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="precioVenta">Precio Venta</Label>
-          <Controller
-            name="precioVenta"
-            control={form.control}
-            render={({ field }) => (
-              <MoneyInput id="precioVenta" value={field.value ?? 0} onChange={field.onChange} />
-            )}
-          />
-          <p className="text-sm text-muted-foreground">Se calcula solo con el Recargo % (sin decimales), podés editarlo a mano</p>
-          {form.formState.errors.precioVenta && (
-            <p className="text-sm text-destructive">{form.formState.errors.precioVenta.message}</p>
-          )}
-        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -202,6 +134,57 @@ export default function ProductoForm({ producto, onSuccess }: ProductoFormProps)
           </datalist>
         </div>
       </div>
+
+      {/* — Lista de materiales y precios: solo al editar (después de crear el producto) — */}
+      {producto && (
+        <>
+          <ProductoArticulosForm key={producto.id} productoId={producto.id} />
+
+          {!hasBom && (
+            <div className="space-y-1">
+              <Label htmlFor="precioCosto">Precio Costo</Label>
+              <Controller
+                name="precioCosto"
+                control={form.control}
+                render={({ field }) => (
+                  <MoneyInput id="precioCosto" value={field.value ?? 0} onChange={field.onChange} />
+                )}
+              />
+              {form.formState.errors.precioCosto && (
+                <p className="text-sm text-destructive">{form.formState.errors.precioCosto.message}</p>
+              )}
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="recargo">Recargo %</Label>
+              <Input
+                id="recargo"
+                type="number"
+                step="0.01"
+                value={recargo}
+                onChange={e => handleRecargoChange(Number(e.target.value))}
+              />
+              <p className="text-sm text-muted-foreground">Costo: ${formatMoney(precioCostoActual)}</p>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="precioVenta">Precio Venta</Label>
+              <Controller
+                name="precioVenta"
+                control={form.control}
+                render={({ field }) => (
+                  <MoneyInput id="precioVenta" value={field.value ?? 0} onChange={field.onChange} />
+                )}
+              />
+              <p className="text-sm text-muted-foreground">Se calcula con el Recargo %, podés editarlo a mano</p>
+              {form.formState.errors.precioVenta && (
+                <p className="text-sm text-destructive">{form.formState.errors.precioVenta.message}</p>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       <Button type="submit" disabled={isPending}>
         {isPending ? 'Guardando...' : 'Guardar'}

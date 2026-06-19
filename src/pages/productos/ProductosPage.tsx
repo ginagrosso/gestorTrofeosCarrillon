@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
-import { useProductos, useDeleteProducto, ProductoForm, ProductoArticulosForm, useAllProductoArticulos } from '@/features/productos'
-import { useProveedores } from '@/features/proveedores'
+import { useProductos, useDeleteProducto, ProductoForm, useAllProductoArticulos } from '@/features/productos'
 import { useImportarProductos, productoColumns, type ProductoExport } from '@/features/importar-exportar'
 import type { Producto } from '@/shared/lib/types'
 import { formatMoney } from '@/shared/lib/money'
@@ -29,7 +28,6 @@ const PRODUCTO_SEARCH_FIELDS: (keyof Producto)[] = ['codigo', 'descripcion', 'ca
 
 export default function ProductosPage() {
   const { data: productos, isLoading } = useProductos()
-  const { data: proveedores } = useProveedores()
   const { data: bomAll } = useAllProductoArticulos()
   const { mutate: deleteProducto, isPending: isDeleting } = useDeleteProducto()
   const importarProductos = useImportarProductos()
@@ -39,11 +37,6 @@ export default function ProductosPage() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingProducto, setEditingProducto] = useState<Producto | undefined>(undefined)
   const [deletingProducto, setDeletingProducto] = useState<Producto | null>(null)
-
-  const nombreProveedorPorId = useMemo(
-    () => new Map((proveedores ?? []).map(p => [p.id, p.nombre])),
-    [proveedores],
-  )
 
   const materialesPorProducto = useMemo(() => {
     const mapa = new Map<string, string[]>()
@@ -57,10 +50,9 @@ export default function ProductosPage() {
   const productosExport = useMemo<ProductoExport[]>(
     () => (productos ?? []).map(p => ({
       ...p,
-      proveedorNombre: nombreProveedorPorId.get(p.proveedorId) ?? '',
       materiales: (materialesPorProducto.get(p.id) ?? []).join(', '),
     })),
-    [productos, nombreProveedorPorId, materialesPorProducto],
+    [productos, materialesPorProducto],
   )
 
   const handleNew = () => {
@@ -118,7 +110,6 @@ export default function ProductosPage() {
               <TableHead className="text-right">Precio Costo</TableHead>
               <TableHead className="text-right">Precio Venta</TableHead>
               <TableHead className="text-right">Stock</TableHead>
-              <TableHead>Proveedor</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -132,7 +123,6 @@ export default function ProductosPage() {
                 <TableCell className="text-right">{formatMoney(producto.precioCosto)}</TableCell>
                 <TableCell className="text-right">{formatMoney(producto.precioVenta)}</TableCell>
                 <TableCell className="text-right">{producto.stockActual}</TableCell>
-                <TableCell>{nombreProveedorPorId.get(producto.proveedorId) || '—'}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(producto)}>
@@ -176,9 +166,6 @@ export default function ProductosPage() {
             producto={editingProducto}
             onSuccess={handleFormSuccess}
           />
-          {editingProducto && (
-            <ProductoArticulosForm key={editingProducto.id} productoId={editingProducto.id} />
-          )}
         </SheetContent>
       </Sheet>
 

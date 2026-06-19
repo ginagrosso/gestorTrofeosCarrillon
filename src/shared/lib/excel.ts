@@ -1,4 +1,5 @@
 import * as XLSX from '@e965/xlsx'
+import XLSXStyle from 'xlsx-js-style'
 
 export interface ColumnDef<T> {
   header: string
@@ -46,11 +47,69 @@ export function fromImportRow<T>(row: Record<string, unknown>, columns: ColumnMa
   return result
 }
 
+// Colores de la marca
+const COLOR_HEADER_BG  = '7B4A2D' // marrón
+const COLOR_HEADER_FG  = 'FFFFFF' // blanco
+const COLOR_ROW_ODD    = 'F5EFE0' // crema (brand cream)
+const COLOR_ROW_EVEN   = 'FFFFFF' // blanco
+const COLOR_BORDER     = 'D6C4A8' // marrón claro para bordes
+
+function makeBorder() {
+  const side = { style: 'thin', color: { rgb: COLOR_BORDER } }
+  return { top: side, bottom: side, left: side, right: side }
+}
+
+function makeCell(value: string | number, style: object): object {
+  const t = typeof value === 'number' ? 'n' : 's'
+  return { v: value, t, s: style }
+}
+
 export function exportToExcel(rows: Record<string, unknown>[], filename: string, sheetName = 'Datos'): void {
-  const worksheet = XLSX.utils.json_to_sheet(rows)
-  const workbook = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName)
-  XLSX.writeFile(workbook, filename)
+  const headers = rows.length > 0 ? Object.keys(rows[0]) : []
+  const numCols = headers.length
+  const numRows = rows.length
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ws: Record<string, any> = {}
+
+  // Encabezados
+  headers.forEach((header, c) => {
+    ws[XLSXStyle.utils.encode_cell({ r: 0, c })] = makeCell(header, {
+      fill: { patternType: 'solid', fgColor: { rgb: COLOR_HEADER_BG } },
+      font: { bold: true, color: { rgb: COLOR_HEADER_FG }, sz: 11 },
+      alignment: { horizontal: 'center', vertical: 'center', wrapText: false },
+      border: makeBorder(),
+    })
+  })
+
+  // Filas de datos
+  rows.forEach((row, rowIdx) => {
+    const bgColor = rowIdx % 2 === 0 ? COLOR_ROW_EVEN : COLOR_ROW_ODD
+    headers.forEach((header, c) => {
+      const raw = row[header]
+      const value = raw === null || raw === undefined ? '' : (raw as string | number)
+      ws[XLSXStyle.utils.encode_cell({ r: rowIdx + 1, c })] = makeCell(value, {
+        fill: { patternType: 'solid', fgColor: { rgb: bgColor } },
+        font: { sz: 10 },
+        border: makeBorder(),
+      })
+    })
+  })
+
+  ws['!ref'] = XLSXStyle.utils.encode_range({ r: 0, c: 0 }, { r: numRows, c: numCols - 1 })
+
+  // Anchos de columna automáticos
+  ws['!cols'] = headers.map((header) => {
+    const maxLen = Math.max(
+      header.length,
+      ...rows.map(row => String(row[header] ?? '').length),
+    )
+    return { wch: Math.min(Math.max(maxLen + 2, 10), 60) }
+  })
+
+  const wb = XLSXStyle.utils.book_new()
+  XLSXStyle.utils.book_append_sheet(wb, ws, sheetName)
+  XLSXStyle.writeFile(wb, filename)
 }
 
 /**

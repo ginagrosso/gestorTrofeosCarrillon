@@ -41,6 +41,13 @@ export const clientesRepository = {
     return this.findById(id) as Promise<Cliente>
   },
 
+  async softDelete(id: string): Promise<void> {
+    await db.collection(COLLECTIONS.CLIENTES).doc(id).update({
+      deletedAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    })
+  },
+
   /**
    * Crea/actualiza muchos clientes por nombre en lotes (Firestore WriteBatch).
    * Evita N+1 queries: precarga los existentes con una sola consulta.
@@ -53,9 +60,8 @@ export const clientesRepository = {
 
     const pendientes = new Map<string, { ref: DocumentReference; data: InsertCliente; creado: boolean }>()
     for (const data of items) {
-      const refExistente = pendientes.get(data.nombre)?.ref ?? refsByNombre.get(data.nombre)
-      const ref = refExistente ?? db.collection(COLLECTIONS.CLIENTES).doc()
-      pendientes.set(data.nombre, { ref, data, creado: !refExistente })
+      const ref = pendientes.get(data.nombre)?.ref ?? refsByNombre.get(data.nombre) ?? db.collection(COLLECTIONS.CLIENTES).doc()
+      pendientes.set(data.nombre, { ref, data, creado: !refsByNombre.has(data.nombre) })
     }
 
     const now = Timestamp.now()
