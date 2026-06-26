@@ -4,6 +4,8 @@ export const COLLECTIONS = {
   CLIENTES:           'clientes',
   PRODUCTOS:          'productos',
   PRODUCTO_ARTICULOS: 'productoArticulos',
+  COMPRAS:            'compras',
+  COMPRA_ITEMS:       'compraItems',
   VENTAS:             'ventas',
   VENTA_ITEMS:        'ventaItems',
   USUARIOS:           'usuarios',

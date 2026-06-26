@@ -146,3 +146,40 @@ export interface ImportResult {
   actualizados: number
   errores: { fila: number; error: string }[]
 }
+
+export const compraItemInputSchema = z.object({
+  articuloId:     z.string().min(1, 'El artículo es obligatorio'),
+  cantidad:       z.number().positive('La cantidad debe ser mayor a 0'),
+  precioUnitario: z.number().nonnegative(),
+})
+
+export const insertCompraSchema = z.object({
+  proveedorId:    z.string().min(1, 'El proveedor es obligatorio'),
+  nroComprobante: z.string().max(50).optional(),
+  items:          z.array(compraItemInputSchema).min(1, 'Agregá al menos un ítem'),
+})
+
+export type CompraItemInput = z.infer<typeof compraItemInputSchema>
+export type InsertCompra    = z.infer<typeof insertCompraSchema>
+
+export interface CompraItem {
+  id:             string
+  compraId:       string
+  articuloId:     string
+  cantidad:       number
+  precioUnitario: number
+}
+
+export interface Compra {
+  id:             string
+  proveedorId:    string
+  nroComprobante?: string | null
+  total:          number
+  createdAt:      FirestoreTimestamp
+  updatedAt:      FirestoreTimestamp
+  deletedAt:      FirestoreTimestamp | null
+}
+
+export interface CompraConItems extends Compra {
+  items: CompraItem[]
+}

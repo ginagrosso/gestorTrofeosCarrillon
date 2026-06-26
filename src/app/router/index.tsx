@@ -8,6 +8,7 @@ import ClientesPage from '@/pages/clientes/ClientesPage'
 import ClienteDetailPage from '@/pages/clientes/ClienteDetailPage'
 import ProductosPage from '@/pages/productos/ProductosPage'
 import VentasPage from '@/pages/ventas/VentasPage'
+import ComprasPage from '@/pages/compras/ComprasPage'
 
 const router = createBrowserRouter([
   {
@@ -27,6 +28,7 @@ const router = createBrowserRouter([
           { path: '/clientes/:id', element: <ClienteDetailPage /> },
           { path: '/productos', element: <ProductosPage /> },
           { path: '/ventas', element: <VentasPage /> },
+          { path: '/compras', element: <ComprasPage /> },
         ],
       },
     ],
