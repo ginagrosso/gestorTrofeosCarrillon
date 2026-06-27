@@ -183,3 +183,61 @@ export interface Compra {
 export interface CompraConItems extends Compra {
   items: CompraItem[]
 }
+
+export const presupuestoItemInputSchema = z.object({
+  productoId:     z.string().min(1, 'El producto es obligatorio'),
+  cantidad:       z.number().positive('La cantidad debe ser mayor a 0'),
+  precioUnitario: z.number().nonnegative(),
+  bonificacion:   z.number().min(0).max(100).default(0),
+})
+
+export const insertPresupuestoSchema = z.object({
+  clienteId:        z.string().optional(),
+  clienteNombre:    z.string().min(1, 'El nombre del cliente es obligatorio').max(200),
+  clienteLocalidad: z.string().max(100).optional(),
+  clienteCuit:      z.string().max(20).optional(),
+  clienteSitIva:    z.string().max(50).optional(),
+  condVenta:        z.string().max(50).default('CONTADO'),
+  observaciones:    z.string().max(500).optional(),
+  plazoEntrega:     z.string().max(100).default('INMEDIATO'),
+  validezDias:      z.number().int().positive().default(30),
+  items:            z.array(presupuestoItemInputSchema).min(1, 'Agregá al menos un ítem'),
+})
+
+export const updatePresupuestoSchema = insertPresupuestoSchema.partial()
+
+export type PresupuestoItemInput = z.infer<typeof presupuestoItemInputSchema>
+export type InsertPresupuesto    = z.infer<typeof insertPresupuestoSchema>
+export type UpdatePresupuesto    = z.infer<typeof updatePresupuestoSchema>
+
+export interface PresupuestoItem {
+  id:             string
+  presupuestoId:  string
+  productoId:     string
+  cantidad:       number
+  precioUnitario: number
+  bonificacion:   number
+  subtotal:       number
+}
+
+export interface Presupuesto {
+  id:               string
+  numero:           number
+  clienteId?:       string | null
+  clienteNombre:    string
+  clienteLocalidad?: string | null
+  clienteCuit?:     string | null
+  clienteSitIva?:   string | null
+  condVenta:        string
+  observaciones?:   string | null
+  plazoEntrega:     string
+  validezDias:      number
+  total:            number
+  createdAt:        FirestoreTimestamp
+  updatedAt:        FirestoreTimestamp
+  deletedAt:        FirestoreTimestamp | null
+}
+
+export interface PresupuestoConItems extends Presupuesto {
+  items: PresupuestoItem[]
+}

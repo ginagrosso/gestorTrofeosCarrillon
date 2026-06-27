@@ -10,6 +10,7 @@ import { productosRouter } from './modules/productos/productos.routes.js'
 import { productoArticulosRouter } from './modules/producto-articulos/producto-articulos.routes.js'
 import { importarRouter } from './modules/importar/importar.routes.js'
 import { comprasRouter } from './modules/compras/compras.routes.js'
+import { presupuestosRouter } from './modules/presupuestos/presupuestos.routes.js'
 
 // Para controlar costos: máximo de instancias concurrentes por función.
 setGlobalOptions({ maxInstances: 10 })
@@ -26,6 +27,7 @@ app.use('/v1/productos', productosRouter)
 app.use('/v1/producto-articulos', productoArticulosRouter)
 app.use('/v1/importar', importarRouter)
 app.use('/v1/compras', comprasRouter)
+app.use('/v1/presupuestos', presupuestosRouter)
 
 app.use(errorHandler)
 
