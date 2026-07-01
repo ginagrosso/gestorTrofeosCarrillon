@@ -241,3 +241,167 @@ export interface Presupuesto {
 export interface PresupuestoConItems extends Presupuesto {
   items: PresupuestoItem[]
 }
+
+export const FORMA_PAGO_VALUES = ['EFECTIVO', 'CHEQUE', 'TRANSFERENCIA', 'CTA_CTE'] as const
+export type FormaPago = typeof FORMA_PAGO_VALUES[number]
+
+export const FORMA_PAGO_LABELS: Record<FormaPago, string> = {
+  EFECTIVO:      'Efectivo',
+  CHEQUE:        'Cheque',
+  TRANSFERENCIA: 'Transferencia',
+  CTA_CTE:       'Cta. Cte.',
+}
+
+export const ESTADO_ORDEN_VALUES = ['PENDIENTE', 'PARCIAL', 'PAGADO'] as const
+export type EstadoOrden = typeof ESTADO_ORDEN_VALUES[number]
+
+export const ordenItemInputSchema = z.object({
+  productoId:     z.string().min(1, 'El producto es obligatorio'),
+  cantidad:       z.number().positive('La cantidad debe ser mayor a 0'),
+  precioUnitario: z.number().nonnegative(),
+})
+
+export const insertOrdenSchema = z.object({
+  fechaPrometida:   z.string().min(1, 'La fecha prometida es obligatoria').max(100),
+  clienteId:        z.string().optional(),
+  clienteNombre:    z.string().min(1, 'El nombre del cliente es obligatorio').max(200),
+  clienteTelefono:  z.string().max(50).optional(),
+  clienteLocalidad: z.string().max(100).optional(),
+  clienteCuit:      z.string().max(20).optional(),
+  condVenta:        z.string().max(50).default('CONTADO'),
+  formaPago:        z.enum(FORMA_PAGO_VALUES).nullable().optional(),
+  reciboNumero:     z.string().max(50).optional(),
+  facturaNumero:    z.string().max(50).optional(),
+  montoEntrega:     z.number().nonnegative().default(0),
+  presupuestoId:    z.string().optional(),
+  items:            z.array(ordenItemInputSchema).min(1, 'Agregá al menos un ítem'),
+})
+
+export const updateOrdenPagoSchema = z.object({
+  montoEntrega:  z.number().nonnegative(),
+  formaPago:     z.enum(FORMA_PAGO_VALUES),
+  reciboNumero:  z.string().max(50).optional(),
+  facturaNumero: z.string().max(50).optional(),
+})
+
+export type OrdenItemInput  = z.infer<typeof ordenItemInputSchema>
+export type InsertOrden     = z.infer<typeof insertOrdenSchema>
+export type UpdateOrdenPago = z.infer<typeof updateOrdenPagoSchema>
+
+export interface OrdenItem {
+  id:             string
+  ordenId:        string
+  productoId:     string
+  cantidad:       number
+  precioUnitario: number
+  subtotal:       number
+}
+
+export interface OrdenDeTrabajo {
+  id:               string
+  numero:           number
+  fechaPrometida:   string
+  clienteId?:       string | null
+  clienteNombre:    string
+  clienteTelefono?: string | null
+  clienteLocalidad?: string | null
+  clienteCuit?:     string | null
+  condVenta:        string
+  formaPago:        FormaPago | null
+  reciboNumero?:    string | null
+  facturaNumero?:   string | null
+  montoEntrega:     number
+  total:            number
+  saldo:            number
+  estado:           EstadoOrden
+  presupuestoId?:   string | null
+  createdAt:        FirestoreTimestamp
+  updatedAt:        FirestoreTimestamp
+  deletedAt:        FirestoreTimestamp | null
+}
+
+export interface OrdenDeTrabajoConItems extends OrdenDeTrabajo {
+  items: OrdenItem[]
+}
+
+export const TIPO_COMPROBANTE_VALUES = ['FACTURA_C', 'REMITO', 'NOTA_CREDITO_C', 'NOTA_DEBITO_C'] as const
+export type TipoComprobante = typeof TIPO_COMPROBANTE_VALUES[number]
+
+export const TIPO_COMPROBANTE_LABELS: Record<TipoComprobante, string> = {
+  FACTURA_C:      'Factura C',
+  REMITO:         'Remito',
+  NOTA_CREDITO_C: 'Nota de Crédito C',
+  NOTA_DEBITO_C:  'Nota de Débito C',
+}
+
+const contadorSchema = z.object({
+  puntoVenta:   z.string().default('0001'),
+  ultimoNumero: z.number().int().nonnegative().default(0),
+})
+
+const contadoresSchema = z.object({
+  FACTURA_C:      contadorSchema,
+  REMITO:         contadorSchema,
+  NOTA_CREDITO_C: contadorSchema,
+  NOTA_DEBITO_C:  contadorSchema,
+})
+
+export type Contador   = z.infer<typeof contadorSchema>
+export type Contadores = z.infer<typeof contadoresSchema>
+
+const defaultContadores: Contadores = {
+  FACTURA_C:      { puntoVenta: '0001', ultimoNumero: 0 },
+  REMITO:         { puntoVenta: '0001', ultimoNumero: 0 },
+  NOTA_CREDITO_C: { puntoVenta: '0001', ultimoNumero: 0 },
+  NOTA_DEBITO_C:  { puntoVenta: '0001', ultimoNumero: 0 },
+}
+
+export const insertEmpresaSchema = z.object({
+  nombreFantasia: z.string().min(1, 'El nombre de fantasía es obligatorio').max(200),
+  razonSocial:    z.string().min(1, 'La razón social es obligatoria').max(200),
+  domicilio:      z.string().min(1, 'El domicilio es obligatorio').max(300),
+  localidad:      z.string().min(1, 'La localidad es obligatoria').max(100),
+  cuit:           z.string().min(1, 'El CUIT es obligatorio').max(20),
+  iibb:           z.string().min(1, 'El número de IIBB es obligatorio').max(30),
+  fechaInicioAct: z.string().min(1, 'La fecha de inicio de actividades es obligatoria').max(20),
+  condIva:        z.string().min(1, 'La condición IVA es obligatoria').max(100),
+  activa:         z.boolean().default(true),
+  contadores:     contadoresSchema.default(defaultContadores),
+})
+
+export const updateEmpresaSchema = insertEmpresaSchema.partial()
+
+export const empresaSchema = insertEmpresaSchema.extend({
+  id: z.string(),
+})
+
+export type InsertEmpresa = z.infer<typeof insertEmpresaSchema>
+export type UpdateEmpresa = z.infer<typeof updateEmpresaSchema>
+export type Empresa       = z.infer<typeof empresaSchema>
+
+export const insertReciboSchema = z.object({
+  clienteNombre: z.string().min(1, 'El nombre del cliente es obligatorio').max(200),
+  monto:         z.number().positive('El monto debe ser mayor a 0'),
+  formaPago:     z.enum(FORMA_PAGO_VALUES),
+  ordenId:       z.string().optional(),
+  ordenNumero:   z.number().optional(),
+  observaciones: z.string().max(300).optional(),
+  empresaId:     z.string().optional(),
+})
+
+export type InsertRecibo = z.infer<typeof insertReciboSchema>
+
+export interface Recibo {
+  id:             string
+  numero:         number
+  clienteNombre:  string
+  monto:          number
+  formaPago:      FormaPago
+  ordenId?:       string | null
+  ordenNumero?:   number | null
+  observaciones?: string | null
+  empresaId?:     string | null
+  fecha:          FirestoreTimestamp
+  createdAt:      FirestoreTimestamp
+  deletedAt:      FirestoreTimestamp | null
+}

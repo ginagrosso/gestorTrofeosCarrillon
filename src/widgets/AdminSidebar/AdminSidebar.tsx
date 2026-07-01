@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Package, Truck, Users, ShoppingBag, Receipt, ShoppingCart, FileText } from 'lucide-react'
+import { Package, Truck, Users, ShoppingBag, Receipt, ShoppingCart, FileText, Settings } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 
 const NAV_ITEMS = [
@@ -9,7 +9,8 @@ const NAV_ITEMS = [
   { to: '/productos', label: 'Productos', icon: ShoppingBag },
   { to: '/compras', label: 'Compras', icon: ShoppingCart },
   { to: '/presupuestos', label: 'Presupuestos', icon: FileText },
-  { to: '/ventas', label: 'Ventas', icon: Receipt },
+  { to: '/ordenes', label: 'Órdenes', icon: Receipt },
+  { to: '/configuracion', label: 'Configuración', icon: Settings },
 ] as const
 
 interface AdminSidebarProps {

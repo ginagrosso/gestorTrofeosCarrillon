@@ -2,12 +2,28 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Pencil, MessageCircle } from 'lucide-react'
 import { useCliente, ClienteForm } from '@/features/clientes'
-import { SIT_IVA_LABELS, TIPO_DOC_LABELS } from '@/shared/lib/types'
+import { useOrdenes } from '@/features/ordenes'
+import { SIT_IVA_LABELS, TIPO_DOC_LABELS, type EstadoOrden } from '@/shared/lib/types'
 import { getWhatsAppUrl } from '@/shared/lib/whatsapp'
+import { formatMoney } from '@/shared/lib/money'
 import { Button } from '@/shared/ui/button'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/shared/ui/sheet'
+
+const ESTADO_CLASS: Record<EstadoOrden, string> = {
+  PENDIENTE: 'text-muted-foreground',
+  PARCIAL:   'font-medium text-yellow-600',
+  PAGADO:    'font-medium text-green-600',
+}
+
+const fmtFecha = (s: string) => {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const [y, m, d] = s.split('-')
+    return `${d}/${m}/${y}`
+  }
+  return s
+}
 
 function InfoField({ label, value }: { label: string; value: string }) {
   return (
@@ -21,7 +37,10 @@ function InfoField({ label, value }: { label: string; value: string }) {
 export default function ClienteDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: cliente, isLoading } = useCliente(id!)
+  const { data: todasLasOrdenes }    = useOrdenes()
   const [editOpen, setEditOpen] = useState(false)
+
+  const ordenesCliente = (todasLasOrdenes ?? []).filter(o => o.clienteId === id)
 
   if (isLoading) {
     return (
@@ -97,21 +116,37 @@ export default function ClienteDetailPage() {
       </div>
 
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-brand-brown">Historial de compras</h2>
+        <h2 className="mb-3 text-lg font-semibold text-brand-brown">Historial de órdenes</h2>
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>N°</TableHead>
               <TableHead>Fecha</TableHead>
-              <TableHead>Total</TableHead>
+              <TableHead>Entrega</TableHead>
+              <TableHead className="text-right">Total</TableHead>
+              <TableHead className="text-right">Saldo</TableHead>
               <TableHead>Estado</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow>
-              <TableCell colSpan={3} className="py-10 text-center text-muted-foreground">
-                No hay movimientos registrados.
-              </TableCell>
-            </TableRow>
+            {ordenesCliente.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                  No hay órdenes de trabajo registradas.
+                </TableCell>
+              </TableRow>
+            ) : ordenesCliente.map(orden => (
+              <TableRow key={orden.id}>
+                <TableCell className="font-medium">#{orden.numero}</TableCell>
+                <TableCell>
+                  {new Date(orden.createdAt._seconds * 1000).toLocaleDateString('es-AR')}
+                </TableCell>
+                <TableCell>{fmtFecha(orden.fechaPrometida)}</TableCell>
+                <TableCell className="text-right">{formatMoney(orden.total)}</TableCell>
+                <TableCell className="text-right">{formatMoney(orden.saldo)}</TableCell>
+                <TableCell className={ESTADO_CLASS[orden.estado]}>{orden.estado}</TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>

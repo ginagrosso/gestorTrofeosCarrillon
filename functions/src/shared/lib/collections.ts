@@ -11,4 +11,8 @@ export const COLLECTIONS = {
   USUARIOS:           'usuarios',
   PRESUPUESTOS:       'presupuestos',
   PRESUPUESTO_ITEMS:  'presupuestoItems',
+  ORDENES:            'ordenes',
+  ORDEN_ITEMS:        'ordenItems',
+  RECIBOS:            'recibos',
+  EMPRESAS:           'empresas',
 } as const
