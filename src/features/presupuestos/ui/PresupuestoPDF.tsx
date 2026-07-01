@@ -1,9 +1,9 @@
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer'
 import type { PresupuestoConItems, Producto } from '@/shared/lib/types'
 
-const BRAND_BROWN = '#7B4A2D'
-const BRAND_GOLD  = '#C9A84C'
-const BRAND_CREAM = '#F5EFE0'
+const BRAND_BROWN = '#1a1a1a'
+const BRAND_GOLD  = '#999'
+const BRAND_CREAM = '#f5f5f5'
 
 const s = StyleSheet.create({
   page:          { padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: '#1a1a1a' },
@@ -22,8 +22,8 @@ const s = StyleSheet.create({
   metaBox:       { flex: 1, backgroundColor: '#f9f9f9', padding: 8, borderRadius: 4, border: `1px solid #e5e5e5` },
   metaLabel:     { fontSize: 8, color: '#888', fontFamily: 'Helvetica-Bold', marginBottom: 2 },
   metaVal:       { fontSize: 9 },
-  tableHeader:   { flexDirection: 'row', backgroundColor: BRAND_BROWN, padding: '6 8', borderRadius: 3, marginBottom: 2 },
-  tableHeaderTxt:{ color: '#fff', fontFamily: 'Helvetica-Bold', fontSize: 9 },
+  tableHeader:   { flexDirection: 'row', backgroundColor: '#e0e0e0', padding: '6 8', borderRadius: 3, marginBottom: 2 },
+  tableHeaderTxt:{ color: '#1a1a1a', fontFamily: 'Helvetica-Bold', fontSize: 9 },
   tableRow:      { flexDirection: 'row', padding: '5 8', borderBottom: `1px solid #ececec` },
   tableRowAlt:   { flexDirection: 'row', padding: '5 8', backgroundColor: '#fafafa', borderBottom: `1px solid #ececec` },
   colCant:       { width: 40, textAlign: 'right' },

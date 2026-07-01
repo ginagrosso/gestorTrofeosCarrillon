@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { SIT_IVA_LABELS } from '@/shared/lib/types'
-import type { Proveedor, Cliente, Articulo, Producto, InsertProveedor } from '@/shared/lib/types'
+import { SIT_IVA_LABELS, FORMA_PAGO_LABELS } from '@/shared/lib/types'
+import type { Proveedor, Cliente, Articulo, Producto, InsertProveedor, OrdenDeTrabajo, FormaPago } from '@/shared/lib/types'
 import type { ColumnMap } from '@/shared/lib/excel'
 
 const toOptionalString = (value: unknown): string | undefined => {
@@ -91,4 +91,23 @@ export const productoColumns: ColumnMap<ProductoExport> = {
   subcategoria:    { header: 'Subcategoría', aliases: ['Subcategoria', 'Columna 9'], export: p => p.subcategoria ?? '', import: toOptionalString },
   // Lista de materiales (BOM): solo exportación, se gestiona desde la Ficha de Producto.
   materiales:      { header: 'Lista de materiales', export: p => p.materiales },
+}
+
+const formatTs = (ts: { _seconds: number }) =>
+  new Date(ts._seconds * 1000).toLocaleDateString('es-AR')
+
+export const ordenColumns: ColumnMap<OrdenDeTrabajo> = {
+  numero:          { header: 'N° Orden',        export: o => o.numero },
+  createdAt:       { header: 'Fecha',            export: o => formatTs(o.createdAt) },
+  fechaPrometida:  { header: 'Fecha Prometida',  export: o => o.fechaPrometida },
+  clienteNombre:   { header: 'Cliente',          export: o => o.clienteNombre },
+  clienteLocalidad:{ header: 'Localidad',        export: o => o.clienteLocalidad ?? '' },
+  condVenta:       { header: 'Cond. Venta',      export: o => o.condVenta },
+  formaPago:       { header: 'Forma de Pago',    export: o => (o.formaPago ? FORMA_PAGO_LABELS[o.formaPago as FormaPago] : '') },
+  total:           { header: 'Total',            export: o => o.total },
+  montoEntrega:    { header: 'Cobrado',          export: o => o.montoEntrega },
+  saldo:           { header: 'Saldo',            export: o => o.saldo },
+  estado:          { header: 'Estado',           export: o => o.estado },
+  reciboNumero:    { header: 'N° Recibo',        export: o => o.reciboNumero ?? '' },
+  facturaNumero:   { header: 'N° Factura',       export: o => o.facturaNumero ?? '' },
 }

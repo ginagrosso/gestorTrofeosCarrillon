@@ -14,7 +14,7 @@ interface ImportExportButtonsProps<T> {
   columns: ColumnMap<T>
   data: T[]
   filename: string
-  importMutation: ImportarMutation
+  importMutation?: ImportarMutation
 }
 
 /** Botones de Importar/Exportar Excel para el header de un ABM. */
@@ -25,7 +25,7 @@ export function ImportExportButtons<T>({ columns, data, filename, importMutation
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ''
-    if (!file) return
+    if (!file || !importMutation) return
 
     let filas: Record<string, unknown>[]
     try {
@@ -48,17 +48,21 @@ export function ImportExportButtons<T>({ columns, data, filename, importMutation
   return (
     <div className="flex flex-col gap-2">
       <div className="flex gap-2">
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".xlsx,.xls"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-        <Button variant="outline" onClick={() => inputRef.current?.click()} disabled={importMutation.isPending}>
-          <Upload />
-          {importMutation.isPending ? 'Importando...' : 'Importar'}
-        </Button>
+        {importMutation && (
+          <>
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <Button variant="outline" onClick={() => inputRef.current?.click()} disabled={importMutation.isPending}>
+              <Upload />
+              {importMutation.isPending ? 'Importando...' : 'Importar'}
+            </Button>
+          </>
+        )}
         <Button
           variant="outline"
           onClick={() => exportToExcel(toExportRows(data, columns), filename)}

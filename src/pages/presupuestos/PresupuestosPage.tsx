@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { pdf } from '@react-pdf/renderer'
-import { Plus, Pencil, Trash2, Printer, Share2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Printer, Share2, ClipboardList } from 'lucide-react'
 import { usePresupuestos, usePresupuesto, useDeletePresupuesto, PresupuestoFormSheet, PresupuestoPDF } from '@/features/presupuestos'
+import { NuevaOrdenSheet } from '@/features/ordenes'
 import { useProductos } from '@/features/productos'
 import { presupuestosApi } from '@/shared/api/presupuestos.api'
 import type { Presupuesto, Producto, PresupuestoConItems } from '@/shared/lib/types'
@@ -48,9 +49,11 @@ export default function PresupuestosPage() {
   const { data: productos } = useProductos()
   const { mutate: deletePresupuesto, isPending: isDeleting } = useDeletePresupuesto()
 
-  const [sheetOpen, setSheetOpen]       = useState(false)
-  const [editingId, setEditingId]       = useState<string | null>(null)
-  const [deletingItem, setDeletingItem] = useState<Presupuesto | null>(null)
+  const [sheetOpen, setSheetOpen]           = useState(false)
+  const [editingId, setEditingId]           = useState<string | null>(null)
+  const [deletingItem, setDeletingItem]     = useState<Presupuesto | null>(null)
+  const [otSheetOpen, setOtSheetOpen]       = useState(false)
+  const [otPresupuesto, setOtPresupuesto]   = useState<PresupuestoConItems | null>(null)
 
   const { data: editingPresupuesto } = usePresupuesto(editingId)
 
@@ -75,6 +78,12 @@ export default function PresupuestosPage() {
   const handleSheetClose = (open: boolean) => {
     setSheetOpen(open)
     if (!open) setEditingId(null)
+  }
+
+  const handleConvertirOT = async (p: Presupuesto) => {
+    const detalle = await obtenerDetalle(p.id)
+    setOtPresupuesto(detalle)
+    setOtSheetOpen(true)
   }
 
   const handleImprimir = async (p: Presupuesto) => {
@@ -162,6 +171,10 @@ export default function PresupuestosPage() {
                 <TableCell className="text-right">{formatMoney(p.total)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
+                    <Button variant="ghost" size="icon" title="Convertir en OT" onClick={() => handleConvertirOT(p)}>
+                      <ClipboardList className="size-4" />
+                      <span className="sr-only">Convertir en OT</span>
+                    </Button>
                     <Button variant="ghost" size="icon" title="Compartir por WhatsApp" onClick={() => handleWhatsApp(p)}>
                       <Share2 className="size-4" />
                       <span className="sr-only">WhatsApp</span>
@@ -195,6 +208,13 @@ export default function PresupuestosPage() {
           onPageChange={setPage}
         />
       )}
+
+      <NuevaOrdenSheet
+        open={otSheetOpen}
+        onOpenChange={(open) => { if (!open) { setOtSheetOpen(false); setOtPresupuesto(null) } }}
+        productos={productos ?? []}
+        presupuesto={otPresupuesto ?? undefined}
+      />
 
       <PresupuestoFormSheet
         open={sheetOpen}
