@@ -2,7 +2,6 @@ import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer'
 import type { Recibo, FormaPago } from '@/shared/lib/types'
 
 const BRAND_BROWN = '#1a1a1a'
-const BRAND_GOLD  = '#999'
 
 const FORMA_PAGO_LABELS: Record<FormaPago, string> = {
   EFECTIVO:      'Efectivo',
@@ -11,23 +10,35 @@ const FORMA_PAGO_LABELS: Record<FormaPago, string> = {
   CTA_CTE:       'Cta. Cte.',
 }
 
+export interface ReciboItem {
+  descripcion:    string
+  cantidad:       number
+  precioUnitario: number
+}
+
+const TICKET_WIDTH = 300
+
 const s = StyleSheet.create({
-  page:      { padding: 48, fontFamily: 'Helvetica', fontSize: 10, color: '#1a1a1a' },
-  header:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, paddingBottom: 14, borderBottom: `2px solid ${BRAND_BROWN}` },
-  empresa:   { flex: 1 },
-  nombre:    { fontSize: 15, fontFamily: 'Helvetica-Bold', color: BRAND_BROWN, marginBottom: 4 },
-  info:      { fontSize: 9, color: '#555', lineHeight: 1.5 },
-  docRight:  { alignItems: 'flex-end' },
-  docLabel:  { fontSize: 13, fontFamily: 'Helvetica-Bold', color: BRAND_BROWN },
-  docFecha:  { fontSize: 9, color: '#555', marginTop: 6 },
-  card:      { marginTop: 32, padding: 24, border: `1px solid #ddd`, borderRadius: 4 },
-  recibido:  { fontSize: 11, lineHeight: 2, color: '#1a1a1a' },
-  bold:      { fontFamily: 'Helvetica-Bold' },
-  monto:     { fontSize: 22, fontFamily: 'Helvetica-Bold', color: BRAND_BROWN, textAlign: 'center', marginTop: 16, marginBottom: 8 },
-  forma:     { fontSize: 10, color: '#666', textAlign: 'center' },
-  divider:   { marginTop: 16, borderTop: `1px solid ${BRAND_GOLD}` },
-  obs:       { marginTop: 10, fontSize: 9, color: '#555' },
-  footer:    { position: 'absolute', bottom: 28, left: 48, right: 48, textAlign: 'center', fontSize: 8, color: '#aaa', borderTop: `1px solid #e5e5e5`, paddingTop: 6 },
+  page:          { paddingTop: 40, fontFamily: 'Helvetica', fontSize: 9, color: '#1a1a1a', alignItems: 'center' },
+  ticket:        { width: TICKET_WIDTH },
+  nombre:        { fontSize: 12, fontFamily: 'Helvetica-Bold', color: BRAND_BROWN, textAlign: 'center' },
+  info:          { fontSize: 8, color: '#555', textAlign: 'center', marginTop: 2 },
+  divider:       { marginVertical: 8, borderBottomWidth: 1, borderBottomColor: '#999', borderBottomStyle: 'dashed' },
+  docLabel:      { fontSize: 11, fontFamily: 'Helvetica-Bold', color: BRAND_BROWN, textAlign: 'center' },
+  docFecha:      { fontSize: 8, color: '#555', textAlign: 'center', marginTop: 2 },
+  row:           { flexDirection: 'row', marginBottom: 4 },
+  rowLabel:      { width: 90, fontFamily: 'Helvetica-Bold', fontSize: 9 },
+  rowVal:        { flex: 1, fontSize: 9 },
+  tableHeader:   { flexDirection: 'row', marginBottom: 3 },
+  tableHeaderTxt:{ fontFamily: 'Helvetica-Bold', fontSize: 8, color: '#555' },
+  itemRow:       { flexDirection: 'row', marginBottom: 3 },
+  colDesc:       { flex: 1, fontSize: 8.5, paddingRight: 4 },
+  colCant:       { width: 26, fontSize: 8.5, textAlign: 'right' },
+  colPrecio:     { width: 58, fontSize: 8.5, textAlign: 'right' },
+  colSubtotal:   { width: 62, fontSize: 8.5, textAlign: 'right' },
+  totalRow:      { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
+  totalLabel:    { fontSize: 11, fontFamily: 'Helvetica-Bold', color: BRAND_BROWN },
+  totalVal:      { fontSize: 13, fontFamily: 'Helvetica-Bold', color: BRAND_BROWN },
 })
 
 const money = (n: number) =>
@@ -38,49 +49,71 @@ const fechaLarga = (ts: { _seconds: number }) => {
   return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })
 }
 
-interface Props { recibo: Recibo }
+interface Props {
+  recibo: Recibo
+  items?: ReciboItem[]
+}
 
-export function ReciboPDF({ recibo }: Props) {
+export function ReciboPDF({ recibo, items = [] }: Props) {
   return (
     <Document>
       <Page size="A4" style={s.page}>
-        <View style={s.header}>
-          <View style={s.empresa}>
-            <Text style={s.nombre}>Trofeos Carrillon Siglo 21</Text>
-            <Text style={s.info}>Av. Italia 947 — Resistencia, Chaco</Text>
-            <Text style={s.info}>Tel: 3624-103544</Text>
-            <Text style={s.info}>carrillonventas@gmail.com</Text>
+        <View style={s.ticket}>
+          <Text style={s.nombre}>Trofeos Carrillon Siglo 21</Text>
+          <Text style={s.info}>Av. Italia 947 — Resistencia, Chaco</Text>
+          <Text style={s.info}>Tel: 3624-103544</Text>
+
+          <View style={s.divider} />
+
+          <Text style={s.docLabel}>RECIBO DE PAGO</Text>
+          <Text style={s.docFecha}>{fechaLarga(recibo.fecha)}</Text>
+
+          <View style={s.divider} />
+
+          <View style={s.row}>
+            <Text style={s.rowLabel}>Cliente:</Text>
+            <Text style={s.rowVal}>{recibo.clienteNombre}</Text>
           </View>
-          <View style={s.docRight}>
-            <Text style={s.docLabel}>RECIBO DE PAGO</Text>
-            <Text style={s.docFecha}>{fechaLarga(recibo.fecha)}</Text>
+          <View style={s.row}>
+            <Text style={s.rowLabel}>Forma de pago:</Text>
+            <Text style={s.rowVal}>{FORMA_PAGO_LABELS[recibo.formaPago]}</Text>
           </View>
-        </View>
-
-        <View style={s.card}>
-          <Text style={s.recibido}>
-            {'Recibí de '}
-            <Text style={s.bold}>{recibo.clienteNombre}</Text>
-            {recibo.ordenNumero
-              ? <Text>{' en concepto de '}<Text style={s.bold}>Orden de Trabajo N° {recibo.ordenNumero}</Text>{', la suma de:'}</Text>
-              : <Text>{', la suma de:'}</Text>
-            }
-          </Text>
-
-          <Text style={s.monto}>{money(recibo.monto)}</Text>
-          <Text style={s.forma}>Forma de pago: {FORMA_PAGO_LABELS[recibo.formaPago]}</Text>
-
           {recibo.observaciones ? (
+            <View style={s.row}>
+              <Text style={s.rowLabel}>Obs.:</Text>
+              <Text style={s.rowVal}>{recibo.observaciones}</Text>
+            </View>
+          ) : null}
+
+          {items.length > 0 ? (
             <>
               <View style={s.divider} />
-              <Text style={s.obs}>Observaciones: {recibo.observaciones}</Text>
+              <View style={s.tableHeader}>
+                <Text style={[s.tableHeaderTxt, s.colDesc]}>Descripción</Text>
+                <Text style={[s.tableHeaderTxt, s.colCant]}>Cant.</Text>
+                <Text style={[s.tableHeaderTxt, s.colPrecio]}>P/Unit.</Text>
+                <Text style={[s.tableHeaderTxt, s.colSubtotal]}>Subtotal</Text>
+              </View>
+              {items.map((item, i) => (
+                <View key={i} style={s.itemRow}>
+                  <Text style={s.colDesc}>{item.descripcion}</Text>
+                  <Text style={s.colCant}>{item.cantidad}</Text>
+                  <Text style={s.colPrecio}>{money(item.precioUnitario)}</Text>
+                  <Text style={s.colSubtotal}>{money(item.cantidad * item.precioUnitario)}</Text>
+                </View>
+              ))}
             </>
           ) : null}
-        </View>
 
-        <Text style={s.footer}>
-          Trofeos Carrillon Siglo 21 · Av. Italia 947, Resistencia, Chaco · Tel: 3624-103544
-        </Text>
+          <View style={s.divider} />
+
+          <View style={s.totalRow}>
+            <Text style={s.totalLabel}>TOTAL</Text>
+            <Text style={s.totalVal}>{money(recibo.monto)}</Text>
+          </View>
+
+          <View style={s.divider} />
+        </View>
       </Page>
     </Document>
   )

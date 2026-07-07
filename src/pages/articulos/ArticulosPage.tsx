@@ -13,6 +13,7 @@ import { Skeleton } from '@/shared/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table'
 import { Pagination } from '@/shared/ui/pagination'
 import { SearchInput } from '@/shared/ui/search-input'
+import { Select } from '@/shared/ui/select'
 import { ImportExportButtons } from '@/shared/ui/import-export-buttons'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/shared/ui/sheet'
 import {
@@ -33,7 +34,15 @@ export default function ArticulosPage() {
   const { data: proveedores } = useProveedores()
   const { mutate: deleteArticulo, isPending: isDeleting } = useDeleteArticulo()
   const importarArticulos = useImportarArticulos()
-  const { search, setSearch, filteredItems } = useSearch(articulos ?? [], ARTICULO_SEARCH_FIELDS)
+
+  const [proveedorFiltro, setProveedorFiltro] = useState('')
+
+  const articulosDelProveedor = useMemo(
+    () => (articulos ?? []).filter(a => !proveedorFiltro || a.proveedorId === proveedorFiltro),
+    [articulos, proveedorFiltro],
+  )
+
+  const { search, setSearch, filteredItems } = useSearch(articulosDelProveedor, ARTICULO_SEARCH_FIELDS)
   const { page, totalPages, totalItems, pageSize, paginatedItems, setPage } = usePagination(filteredItems)
 
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -83,7 +92,19 @@ export default function ArticulosPage() {
         </div>
       </header>
 
-      <SearchInput value={search} onChange={setSearch} placeholder="Buscar artículo..." />
+      <div className="flex gap-2">
+        <div className="w-64">
+          <Select value={proveedorFiltro} onChange={e => setProveedorFiltro(e.target.value)}>
+            <option value="">Todos los proveedores</option>
+            {(proveedores ?? []).map(p => (
+              <option key={p.id} value={p.id}>{p.nombre}</option>
+            ))}
+          </Select>
+        </div>
+        <div className="flex-1">
+          <SearchInput value={search} onChange={setSearch} placeholder="Buscar artículo..." />
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="flex flex-col gap-2">

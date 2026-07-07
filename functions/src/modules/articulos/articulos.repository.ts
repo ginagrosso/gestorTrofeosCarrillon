@@ -114,7 +114,7 @@ export const articulosRepository = {
     const writes: ((batch: WriteBatch) => void)[] = []
 
     for (const articulo of articulos) {
-      const precioCosto = Math.round(articulo.precioCosto * factor * 100) / 100
+      const precioCosto = Math.trunc(articulo.precioCosto * factor)
       const ref = db.collection(COLLECTIONS.ARTICULOS).doc(articulo.id)
       writes.push(batch => batch.update(ref, { precioCosto, precioActualizadoAt: now, updatedAt: now }))
       actualizados.push({ ...articulo, precioCosto, precioActualizadoAt: now, updatedAt: now })

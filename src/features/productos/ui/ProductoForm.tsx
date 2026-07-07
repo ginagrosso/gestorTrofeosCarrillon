@@ -13,9 +13,8 @@ import { useProductoArticulos } from '../hooks/useProductoArticulos'
 import { useCreateProducto, useUpdateProducto } from '../hooks/useProductosMutations'
 import ProductoArticulosForm from './ProductoArticulosForm'
 
-const round = (value: number) => Math.round(value * 100) / 100
-// Precio Venta se muestra sin decimales: 0.5 redondea hacia arriba, por debajo hacia abajo.
-const roundPrecioVenta = (value: number) => Math.round(value)
+// El cliente no trabaja con decimales en los precios: se truncan (no se redondean).
+const truncar = (value: number) => Math.trunc(value)
 
 interface ProductoFormProps {
   producto?: Producto
@@ -28,7 +27,7 @@ export default function ProductoForm({ producto, onSuccess }: ProductoFormProps)
   const { data: productos } = useProductos()
   const { data: bom } = useProductoArticulos(producto?.id)
   const hasBom = (bom?.length ?? 0) > 0
-  const bomTotal = round((bom ?? []).reduce((sum, item) => sum + item.cantidad * (item.articulo?.precioCosto ?? 0), 0))
+  const bomTotal = truncar((bom ?? []).reduce((sum, item) => sum + item.cantidad * (item.articulo?.precioCosto ?? 0), 0))
   const isPending = isCreating || isUpdating
   const categoriaOptions = [...new Set((productos ?? []).map(p => p.categoria).filter((c): c is string => !!c))].sort()
   const subcategoriaOptions = [...new Set((productos ?? []).map(p => p.subcategoria).filter((c): c is string => !!c))].sort()
@@ -51,14 +50,14 @@ export default function ProductoForm({ producto, onSuccess }: ProductoFormProps)
 
   const [recargo, setRecargo] = useState(() => {
     if (producto && producto.precioCosto > 0 && producto.precioVenta > producto.precioCosto) {
-      return round(((producto.precioVenta / producto.precioCosto) - 1) * 100)
+      return Math.round(((producto.precioVenta / producto.precioCosto) - 1) * 100 * 100) / 100
     }
     return 0
   })
 
   const handleRecargoChange = (value: number) => {
     setRecargo(value)
-    form.setValue('precioVenta', roundPrecioVenta(precioCostoActual * (1 + value / 100)), { shouldValidate: true })
+    form.setValue('precioVenta', truncar(precioCostoActual * (1 + value / 100)), { shouldValidate: true })
   }
 
   // Si la lista de materiales recalculó el costo (al guardarla recién o por
@@ -68,7 +67,7 @@ export default function ProductoForm({ producto, onSuccess }: ProductoFormProps)
     if (!hasBom) return
     if (bomTotal === form.getValues('precioCosto')) return
     form.setValue('precioCosto', bomTotal)
-    form.setValue('precioVenta', roundPrecioVenta(bomTotal * (1 + recargo / 100)), { shouldValidate: true })
+    form.setValue('precioVenta', truncar(bomTotal * (1 + recargo / 100)), { shouldValidate: true })
   }, [hasBom, bomTotal, recargo, form])
 
   const onSubmit = (data: InsertProducto) => {
@@ -147,7 +146,7 @@ export default function ProductoForm({ producto, onSuccess }: ProductoFormProps)
                 name="precioCosto"
                 control={form.control}
                 render={({ field }) => (
-                  <MoneyInput id="precioCosto" value={field.value ?? 0} onChange={field.onChange} />
+                  <MoneyInput id="precioCosto" value={field.value ?? 0} onChange={field.onChange} allowDecimals={false} />
                 )}
               />
               {form.formState.errors.precioCosto && (
@@ -174,7 +173,7 @@ export default function ProductoForm({ producto, onSuccess }: ProductoFormProps)
                 name="precioVenta"
                 control={form.control}
                 render={({ field }) => (
-                  <MoneyInput id="precioVenta" value={field.value ?? 0} onChange={field.onChange} />
+                  <MoneyInput id="precioVenta" value={field.value ?? 0} onChange={field.onChange} allowDecimals={false} />
                 )}
               />
               <p className="text-sm text-muted-foreground">Se calcula con el Recargo %, podés editarlo a mano</p>

@@ -116,7 +116,7 @@ export default function ProductosPage() {
           <TableBody>
             {paginatedItems.map((producto) => (
               <TableRow key={producto.id}>
-                <TableCell className="font-medium">{producto.codigo}</TableCell>
+                <TableCell className="font-semibold text-blue-700">{producto.codigo}</TableCell>
                 <TableCell>{producto.descripcion}</TableCell>
                 <TableCell>{producto.categoria || '—'}</TableCell>
                 <TableCell>{producto.subcategoria || '—'}</TableCell>

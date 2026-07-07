@@ -9,6 +9,7 @@ export const presupuestoItemInputSchema = z.object({
 })
 
 export const insertPresupuestoSchema = z.object({
+  empresaId:        z.string().min(1, 'La empresa es obligatoria'),
   clienteId:        z.string().optional(),
   clienteNombre:    z.string().min(1, 'El nombre del cliente es obligatorio').max(200),
   clienteLocalidad: z.string().max(100).optional(),
@@ -36,6 +37,7 @@ export const presupuestoItemSchema = presupuestoItemInputSchema.extend({
 export const presupuestoSchema = z.object({
   id:               z.string(),
   numero:           z.number(),
+  empresaId:        z.string().nullable().optional(),
   clienteId:        z.string().nullable().optional(),
   clienteNombre:    z.string(),
   clienteLocalidad: z.string().nullable().optional(),

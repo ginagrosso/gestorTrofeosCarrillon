@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Package, Truck, Users, ShoppingBag, Receipt, ShoppingCart, FileText, Settings } from 'lucide-react'
+import { Package, Truck, Users, ShoppingBag, Receipt, ShoppingCart, FileText, ScrollText, Settings } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 
 const NAV_ITEMS = [
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { to: '/compras', label: 'Compras', icon: ShoppingCart },
   { to: '/presupuestos', label: 'Presupuestos', icon: FileText },
   { to: '/ordenes', label: 'Órdenes', icon: Receipt },
+  { to: '/comprobantes', label: 'Comprobantes', icon: ScrollText },
   { to: '/configuracion', label: 'Configuración', icon: Settings },
 ] as const
 

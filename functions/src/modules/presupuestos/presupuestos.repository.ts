@@ -61,6 +61,7 @@ export const presupuestosRepository = {
       tx.set(counterRef, { ultimo: numero }, { merge: true })
       tx.set(presupuestoRef, {
         numero,
+        empresaId:        data.empresaId,
         clienteId:        data.clienteId ?? null,
         clienteNombre:    data.clienteNombre,
         clienteLocalidad: data.clienteLocalidad ?? null,
@@ -104,6 +105,7 @@ export const presupuestosRepository = {
     return {
       id: presupuestoId,
       numero,
+      empresaId:        data.empresaId,
       clienteId:        data.clienteId ?? null,
       clienteNombre:    data.clienteNombre,
       clienteLocalidad: data.clienteLocalidad ?? null,
@@ -126,6 +128,7 @@ export const presupuestosRepository = {
     const batch = db.batch()
 
     const updateFields: Record<string, unknown> = { updatedAt: now }
+    if ('empresaId' in data)        updateFields['empresaId']        = data.empresaId
     if ('clienteId' in data)        updateFields['clienteId']        = data.clienteId ?? null
     if ('clienteNombre' in data)    updateFields['clienteNombre']    = data.clienteNombre
     if ('clienteLocalidad' in data) updateFields['clienteLocalidad'] = data.clienteLocalidad ?? null

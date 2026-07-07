@@ -1,12 +1,15 @@
 import { z } from 'zod'
 import { Timestamp } from 'firebase-admin/firestore'
 
+// El cliente no trabaja con decimales en los precios: se truncan (no se redondean) al cargar.
+const precioSinDecimales = z.number().nonnegative().transform(v => Math.trunc(v))
+
 export const insertProductoSchema = z.object({
   codigo:       z.string().min(1, 'El código es obligatorio').max(50),
   descripcion:  z.string().min(1, 'La descripción es obligatoria').max(300),
-  precioCosto:  z.number().nonnegative(),
+  precioCosto:  precioSinDecimales,
   porcIva:      z.number().nonnegative(),
-  precioVenta:  z.number().nonnegative(),
+  precioVenta:  precioSinDecimales,
   stockActual:  z.number().int().default(0),
   categoria:    z.string().max(100).optional(),
   subcategoria: z.string().max(100).optional(),

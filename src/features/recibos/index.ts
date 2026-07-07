@@ -1,3 +1,3 @@
 export { default as NuevoReciboSheet } from './ui/NuevoReciboSheet'
-export { ReciboPDF } from './ui/ReciboPDF'
+export { ReciboPDF, type ReciboItem } from './ui/ReciboPDF'
 export { useCreateRecibo, useDeleteRecibo } from './hooks/useRecibosMutations'

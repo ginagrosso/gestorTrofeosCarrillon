@@ -13,12 +13,14 @@ interface MoneyInputProps {
   value: number
   onChange: (value: number) => void
   className?: string
+  /** false para precios que no admiten decimales (el cliente no trabaja con centavos). Default: true. */
+  allowDecimals?: boolean
 }
 
 // Input de dinero: punto para miles y coma para decimales (ej: "101.019").
 // Mientras se edita se muestra el número sin separador de miles (coma como
 // decimal); al salir del campo se reformatea con formatMoney.
-export function MoneyInput({ id, value, onChange, className }: MoneyInputProps) {
+export function MoneyInput({ id, value, onChange, className, allowDecimals = true }: MoneyInputProps) {
   const [text, setText] = useState('')
   const [focused, setFocused] = useState(false)
 
@@ -26,16 +28,17 @@ export function MoneyInput({ id, value, onChange, className }: MoneyInputProps) 
     <Input
       id={id}
       type="text"
-      inputMode="decimal"
+      inputMode={allowDecimals ? 'decimal' : 'numeric'}
       className={className}
       value={focused ? text : formatMoney(value)}
       onFocus={() => {
         setFocused(true)
-        setText(String(value).replace('.', ','))
+        setText(allowDecimals ? String(value).replace('.', ',') : String(Math.trunc(value)))
       }}
       onChange={(e) => {
-        setText(e.target.value)
-        onChange(parseMoneyInput(e.target.value))
+        const raw = allowDecimals ? e.target.value : e.target.value.replace(/[.,]/g, '')
+        setText(raw)
+        onChange(allowDecimals ? parseMoneyInput(raw) : Math.trunc(parseMoneyInput(raw)))
       }}
       onBlur={() => setFocused(false)}
     />

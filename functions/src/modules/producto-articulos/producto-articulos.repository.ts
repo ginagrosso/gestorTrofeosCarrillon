@@ -55,9 +55,9 @@ export const productoArticulosRepository = {
       const articulos = await articulosRepository.findByIds(bom.map(item => item.articuloId))
       const articulosPorId = new Map(articulos.map(articulo => [articulo.id, articulo]))
 
-      const precioCosto = bom.reduce((sum, item) => {
+      const precioCosto = Math.trunc(bom.reduce((sum, item) => {
         return sum + item.cantidad * (articulosPorId.get(item.articuloId)?.precioCosto ?? 0)
-      }, 0)
+      }, 0))
 
       const ref = db.collection(COLLECTIONS.PRODUCTOS).doc(productoId)
       writes.push(batch => batch.update(ref, { precioCosto, updatedAt: now }))
@@ -98,6 +98,7 @@ export const productoArticulosRepository = {
         }
         precioCosto += item.cantidad * (snap.data()?.precioCosto ?? 0)
       })
+      precioCosto = Math.trunc(precioCosto)
 
       const now = Timestamp.now()
 

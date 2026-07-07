@@ -53,6 +53,7 @@ export const ordenesRepository = {
       tx.set(ordenRef, {
         numero,
         fechaPrometida:   data.fechaPrometida,
+        empresaId:        data.empresaId,
         clienteId:        data.clienteId ?? null,
         clienteNombre:    data.clienteNombre,
         clienteTelefono:  data.clienteTelefono ?? null,
@@ -123,6 +124,7 @@ export const ordenesRepository = {
       id: ordenId,
       numero,
       fechaPrometida:   data.fechaPrometida,
+      empresaId:        data.empresaId,
       clienteId:        data.clienteId ?? null,
       clienteNombre:    data.clienteNombre,
       clienteTelefono:  data.clienteTelefono ?? null,

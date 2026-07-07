@@ -134,7 +134,7 @@ export default function ConfiguracionPage() {
       )}
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent>
+        <SheetContent className="overflow-y-auto">
           <SheetHeader>
             <SheetTitle>{editingEmpresa ? 'Editar empresa' : 'Nueva empresa'}</SheetTitle>
             <SheetDescription>

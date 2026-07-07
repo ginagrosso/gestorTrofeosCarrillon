@@ -71,6 +71,10 @@ src/
 ├── shared/       # ui, api, lib, hooks, config reutilizables
 ```
 
+**Deuda técnica pendiente — modularizar `shared/lib/types.ts`:**
+Hoy **todos** los schemas Zod y tipos inferidos del frontend (de todas las entidades: Proveedor, Cliente, Articulo, Producto, Compra, Presupuesto, Orden, Empresa, Comprobante, Recibo, etc.) viven en un único archivo `src/shared/lib/types.ts`, que ya creció demasiado. La carpeta `entities/` está prevista en la arquitectura pero sigue vacía.
+Próxima refactorización (hacerla de forma incremental, entidad por entidad, sin mezclarla con features nuevas): mover cada schema + tipos de esa entidad a `src/entities/{entidad}/model.ts` (o `index.ts`), y actualizar los imports (`@/shared/lib/types` → `@/entities/{entidad}`) en todo el código que los consume (`shared/api/*.api.ts`, `features/*/hooks`, `features/*/ui`, `pages/*`).
+
 ---
 
 ## Modelos de datos (extraídos del sistema legacy)
@@ -184,6 +188,7 @@ precioUnitario  number    requerido, >= 0
 id              string    — Firestore auto-id
 numero          number    — secuencial interno (NO se muestra en el PDF)
 fecha           timestamp requerido — auto
+empresaId       string    requerido — empresa a la que se le imputa (MAD o MEPB), elegida en el formulario
 clienteId       string    opcional — si es cliente registrado
 clienteNombre   string    requerido — autocompletado desde cliente o escrito a mano
 clienteLocalidad string   opcional
@@ -228,6 +233,7 @@ id              string    — Firestore auto-id
 numero          number    — secuencial visible en PDF, empieza desde 1
 fecha           timestamp requerido — auto al guardar
 fechaPrometida  string    requerido — fecha prometida de entrega (ej: "Viernes 8")
+empresaId       string    requerido — empresa a la que se le imputa (MAD o MEPB), elegida en el formulario. Se usa para generar la Factura C sin volver a preguntar.
 clienteId       string    opcional — si es cliente registrado
 clienteNombre   string    requerido — autocompletado desde cliente o escrito a mano
 clienteLocalidad string   opcional
@@ -286,35 +292,19 @@ iibb            string    requerido — número de Ingresos Brutos
 fechaInicioAct  string    requerido — fecha de inicio de actividades
 condIva         string    requerido — ej: "Responsable Monotributo"
 activa          boolean   default true
+contadores      object    requerido — numeración de comprobantes por tipo, ver abajo
 ```
+`contadores`: un objeto con una entrada por cada tipo (`FACTURA_C | REMITO | NOTA_CREDITO_C | NOTA_DEBITO_C`), cada una `{ puntoVenta: string (ej: "0001"), ultimoNumero: number }`. Al cargar la empresa, el admin define `puntoVenta` y deja `ultimoNumero` en el último número ya usado (ej: si el talonario físico previo llegó hasta el 1312, se carga `ultimoNumero: 1312` para que el próximo comprobante sea el 1313). No hay talonarios, rangos, CAI ni vencimientos en el sistema — es solo un contador simple que se incrementa en cada comprobante emitido, sin tope.
 - Gestionable desde la sección de Configuración del sistema (ABM). **No hay datos de empresa hardcodeados en el código.**
 - Actualmente hay 2 empresas: MAD (Diez María Agostina / Trofeos Siglo XXI) y MEPB (Pérez Brignole María Ercilia / Premios & Homenajes), pero el modelo soporta N empresas.
-
-### talonarios
-```
-id              string    — Firestore auto-id
-empresaId       string    requerido — ref a empresa
-tipo            enum      FACTURA_C | REMITO | NOTA_CREDITO_C | NOTA_DEBITO_C
-puntoVenta      string    requerido — ej: "0001"
-numeroDesde     number    requerido
-numeroHasta     number    requerido
-ultimoNumero    number    requerido — autoincremental al emitir cada comprobante
-cai             string    requerido — Código de Autorización de Impresión (AFIP)
-caiVencimiento  string    requerido — fecha de vencimiento del CAI
-activo          boolean   default true
-```
-- Gestionable desde Configuración. Al emitir un comprobante, el sistema toma el talonario activo de esa empresa + tipo y avanza `ultimoNumero`.
-- El número formateado del comprobante es `{puntoVenta}-{ultimoNumero}` (ej: `0001-00001313`).
-- Si `ultimoNumero >= numeroHasta`, el talonario se agota y no se pueden emitir más comprobantes de ese tipo hasta cargar uno nuevo.
 
 ### comprobantes (Factura C, Remito, Nota de Crédito C, Nota de Débito C)
 ```
 id              string    — Firestore auto-id
 tipo            enum      FACTURA_C | REMITO | NOTA_CREDITO_C | NOTA_DEBITO_C
-numero          string    — generado del talonario, ej: "0001-00001313"
+numero          string    — generado de empresa.contadores[tipo], ej: "0001-00001313"
 fecha           timestamp requerido — auto al guardar
 empresaId       string    requerido — ref a empresa
-talonarioId     string    requerido — ref al talonario usado
 clienteId       string    opcional — si es cliente registrado
 clienteNombre   string    requerido
 clienteDireccion string   opcional
@@ -332,6 +322,7 @@ updatedAt       timestamp requerido — auto
 deletedAt       timestamp nullable, default null — soft delete
 ```
 - Registro de solo lectura una vez guardado (no se edita).
+- Al crear (transacción atómica): lee `empresa.contadores[tipo].ultimoNumero`, calcula `nuevoNumero = ultimoNumero + 1`, formatea `numero = "{puntoVenta}-{nuevoNumero con padding a 8 dígitos}"`, actualiza `empresa.contadores[tipo].ultimoNumero = nuevoNumero` y crea el comprobante, todo en la misma transacción de Firestore.
 
 ### comprobanteItems
 ```
@@ -364,11 +355,12 @@ deletedAt       timestamp nullable, default null — soft delete
 ### PDF e impresión de comprobantes
 
 **Factura C y Remito — overlay sobre formulario preimpreso**
-- El sistema genera un PDF con **solo los datos variables** (fecha, número, datos del cliente, items, totales) posicionados con coordenadas exactas para superponerse sobre la plantilla preimpresa de AFIP.
-- El empleado coloca la plantilla preimpresa en la impresora y la pasa por segunda vez con el PDF del sistema. El formulario físico (con CAI y pie de imprenta de la imprenta habilitada) **es el documento legal**; el sistema solo imprime los datos variables encima.
+- El sistema genera un PDF con **solo los datos variables** (fecha, datos del cliente, observaciones, items, total) posicionados con coordenadas exactas para superponerse sobre la plantilla preimpresa de AFIP.
+- **El overlay NO imprime ningún número de comprobante.** Cada hoja de la plantilla preimpresa ya trae su propio número de fábrica (impreso por la imprenta habilitada junto con el resto del formulario, ej. "Punto de Venta: 0001-00001312"). El `numero` que genera el sistema (`empresa.contadores[tipo]`) es exclusivamente para el registro interno/búsqueda dentro del sistema — no tiene por qué coincidir con el número físico de la hoja y no se imprime.
+- El empleado coloca la plantilla preimpresa en la impresora y la pasa por segunda vez con el PDF del sistema. El formulario físico (con CAI, número y pie de imprenta de la imprenta habilitada) **es el documento legal**; el sistema solo imprime los datos variables encima.
 - Las coordenadas de cada campo se calibran durante la implementación contra los formularios físicos reales. El cliente debe proveer ejemplares de ambas empresas (MAD y MEPB) para la calibración.
-- El "pie de imprenta" (sello de la imprenta habilitada con datos fiscales y CAI) está preimpreso en el formulario — **el sistema no lo genera ni lo necesita**.
-- Columnas de la tabla de ítems en el overlay: `Cant. | Código | Nom. Producto | Precio | Bonif. | Sub Total`
+- El "pie de imprenta" (sello de la imprenta habilitada con datos fiscales, número de comprobante y CAI) está preimpreso en el formulario — **el sistema no lo genera ni lo necesita**.
+- El formulario preimpreso trae el recuadro/título ("FACTURA", código, encabezado de la empresa) y los encabezados de columna de la tabla (`Cant. | Código | Nom. Producto | Precio | Bonif. | Sub Total`), pero **no** trae los labels de los campos de datos ("Cliente:", "Dirección:", "Sit.IVA:", "Localidad:", "CUIT:", "Cond.Venta:", "Obs.:") ni la palabra "Total:" — esos los imprime el sistema junto con el valor (igual que el sistema legacy), en la misma posición fija de cada campo, y el label se imprime siempre aunque el valor esté vacío (ej. "Obs.:" sin nada al lado si no hay observaciones).
 
 **Nota de Crédito C y Nota de Débito C — PDF completo en hoja en blanco**
 - Misma estructura visual que Factura C pero generado en su totalidad (sin overlay).
@@ -376,22 +368,27 @@ deletedAt       timestamp nullable, default null — soft delete
 - Campo adicional en el PDF: "Comprobante de referencia" (número de la factura original que se acredita/debita).
 
 **Recibo de pago — PDF informal en hoja en blanco**
-- Ticket compacto: "Recibí de [clienteNombre] la suma de $[monto] en concepto de Orden N° [X]".
-- Sin items, sin CAI, sin pie de imprenta. No es documento fiscal.
+- Se imprime en hoja A4 normal, pero el contenido se ve como un ticket angosto y compacto (no como un recibo formal para completar a mano): datos en lista — Cliente / Forma de pago / Obs. — separados por líneas punteadas.
+- Sin frases tipo "Recibí de... la suma de...". **No se muestra el número de Orden de Trabajo** en el impreso (aunque el recibo quede vinculado internamente por `ordenId`).
+- Cuando el recibo es "por el total" (botón en la tabla de OT), incluye una tabla de ítems (Descripción / Cant. / P. Unit. / Subtotal) con el detalle de los productos de la orden, antes del total. Los recibos de pagos parciales (desde "Registrar pago") no llevan esta tabla — muestran solo el monto del pago de ese momento, sin desglose de ítems (porque no equivale al total de la orden).
+- Sin CAI, sin pie de imprenta. No es documento fiscal.
 - El número interno del recibo **no aparece** en el impreso.
 
 ### UX — Generación de comprobantes
 
-**Desde una OT (flujo principal):**
-- En la ficha de la OT, botones: `Factura C` / `Remito` / `Recibo`.
-- El formulario se preautocompletea con cliente, items y total de la OT. El usuario elige la empresa (de las empresas activas en el sistema) y confirma.
+**Factura C y Remito desde una OT (flujo principal, único lugar donde se generan):**
+- En la tabla de OT, botones `Factura C` / `Remito`. Ambos usan directamente `empresaId` de la OT (ya no se pregunta la empresa) y, si la OT está vinculada a un cliente registrado, precargan sus datos fiscales completos y actuales (dirección, localidad, CUIT, condición IVA) — no solo lo que haya guardado la propia OT.
+- Los dos abren el mismo sheet de revisión (`ConfirmarComprobanteSheet`, con el tipo como parámetro) con los datos del cliente **editables** (nombre, dirección, localidad, CUIT, condición IVA, condición de venta) y los ítems en solo lectura, antes de confirmar.
+- **El CUIT es obligatorio solo para Factura C** (no para Remito) — no deja generar la factura sin completarlo.
+- Al confirmar: genera el comprobante, lo deja guardado en la sección Comprobantes, **y en el mismo paso abre la vista previa de impresión** — no hace falta ir a la sección Comprobantes para imprimirlo.
+- Si la OT no tiene `empresaId` (registros de antes de este campo), el botón avisa con un error en vez de abrir el sheet.
+- Sin restricción por estado de pago: se puede generar en cualquier estado (PENDIENTE, PARCIAL o PAGADO).
 - El comprobante queda vinculado a la OT (`ordenId`).
 
 **Standalone (venta de mostrador sin OT previa):**
-- Desde la sección Comprobantes, crear nuevo comprobante con formulario completo (empresa, tipo, cliente, items).
+- Desde la sección Comprobantes, crear nuevo comprobante con formulario completo (empresa, tipo, cliente, items) — los ítems se eligen del catálogo de productos (combobox), igual que en presupuestos/OT.
 
-**Desde un presupuesto aprobado:**
-- En la ficha del presupuesto, botón `Generar Factura C` — misma lógica que desde OT, vinculado por `presupuestoId`.
+**Presupuestos:** no generan comprobantes. La Factura C solo se genera desde la OT (ver arriba); un presupuesto se convierte primero en OT y desde ahí se factura.
 
 ---
 

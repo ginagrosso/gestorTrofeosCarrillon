@@ -15,4 +15,6 @@ export const COLLECTIONS = {
   ORDEN_ITEMS:        'ordenItems',
   RECIBOS:            'recibos',
   EMPRESAS:           'empresas',
+  COMPROBANTES:       'comprobantes',
+  COMPROBANTE_ITEMS:  'comprobanteItems',
 } as const

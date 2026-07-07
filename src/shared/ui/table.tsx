@@ -32,7 +32,10 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.ComponentProps<'tr'
   ({ className, ...props }, ref) => (
     <tr
       ref={ref}
-      className={cn('border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted', className)}
+      className={cn(
+        'border-b transition-colors odd:bg-muted/25 hover:bg-muted/60 data-[state=selected]:bg-muted',
+        className,
+      )}
       {...props}
     />
   ),
@@ -44,7 +47,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ComponentProps<'t
     <th
       ref={ref}
       className={cn(
-        'h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
+        'h-10 border-r px-2 text-left align-middle font-medium text-muted-foreground last:border-r-0 [&:has([role=checkbox])]:pr-0',
         className,
       )}
       {...props}
@@ -55,7 +58,11 @@ TableHead.displayName = 'TableHead'
 
 const TableCell = React.forwardRef<HTMLTableCellElement, React.ComponentProps<'td'>>(
   ({ className, ...props }, ref) => (
-    <td ref={ref} className={cn('p-2 align-middle [&:has([role=checkbox])]:pr-0', className)} {...props} />
+    <td
+      ref={ref}
+      className={cn('border-r p-2 align-middle last:border-r-0 [&:has([role=checkbox])]:pr-0', className)}
+      {...props}
+    />
   ),
 )
 TableCell.displayName = 'TableCell'

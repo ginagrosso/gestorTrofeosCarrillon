@@ -1,5 +1,6 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import type { z } from 'zod'
 import {
   insertEmpresaSchema,
   TIPO_COMPROBANTE_VALUES,
@@ -30,7 +31,7 @@ export default function EmpresaForm({ empresa, onSuccess }: EmpresaFormProps) {
   const { mutate: updateEmpresa, isPending: isUpdating } = useUpdateEmpresa()
   const isPending = isCreating || isUpdating
 
-  const form = useForm<InsertEmpresa>({
+  const form = useForm<z.input<typeof insertEmpresaSchema>, unknown, InsertEmpresa>({
     resolver: zodResolver(insertEmpresaSchema),
     defaultValues: empresa
       ? { ...empresa, contadores: empresa.contadores ?? DEFAULT_CONTADORES }

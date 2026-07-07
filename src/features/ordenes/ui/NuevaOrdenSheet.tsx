@@ -12,6 +12,7 @@ import {
   FORMA_PAGO_LABELS,
 } from '@/shared/lib/types'
 import { useClientes } from '@/features/clientes'
+import { useEmpresas } from '@/features/empresas'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
@@ -25,11 +26,14 @@ import { useCreateOrden } from '../hooks/useOrdenesMutations'
 const EMPTY_ITEM = { productoId: '', cantidad: 1, precioUnitario: 0 }
 
 const EMPTY_DEFAULTS = {
-  fechaPrometida:  '',
-  clienteId:       undefined as string | undefined,
-  clienteNombre:   '',
-  clienteTelefono: '',
-  condVenta:       'CONTADO',
+  fechaPrometida:   '',
+  empresaId:        '',
+  clienteId:        undefined as string | undefined,
+  clienteNombre:    '',
+  clienteTelefono:  '',
+  clienteLocalidad: '',
+  clienteCuit:      '',
+  condVenta:        'CONTADO',
   formaPago:       null as z.input<typeof insertOrdenSchema>['formaPago'],
   montoEntrega:    0,
   items:           [{ ...EMPTY_ITEM }],
@@ -44,7 +48,10 @@ interface Props {
 
 export default function NuevaOrdenSheet({ open, onOpenChange, productos, presupuesto }: Props) {
   const { data: clientes } = useClientes()
+  const { data: empresas } = useEmpresas()
   const { mutate: createOrden, isPending } = useCreateOrden()
+
+  const empresasActivas = useMemo(() => (empresas ?? []).filter(e => e.activa), [empresas])
 
   const productoOptions = useMemo(
     () => productos.map(p => ({ value: p.id, label: `${p.codigo} — ${p.descripcion}` })),
@@ -68,9 +75,12 @@ export default function NuevaOrdenSheet({ open, onOpenChange, productos, presupu
     if (!presupuesto) return
     reset({
       ...EMPTY_DEFAULTS,
-      clienteId:     presupuesto.clienteId ?? undefined,
-      clienteNombre: presupuesto.clienteNombre,
-      presupuestoId: presupuesto.id,
+      empresaId:        presupuesto.empresaId ?? '',
+      clienteId:        presupuesto.clienteId ?? undefined,
+      clienteNombre:    presupuesto.clienteNombre,
+      clienteLocalidad: presupuesto.clienteLocalidad ?? '',
+      clienteCuit:      presupuesto.clienteCuit ?? '',
+      presupuestoId:    presupuesto.id,
       items: presupuesto.items.map(i => ({
         productoId:     i.productoId,
         cantidad:       i.cantidad,
@@ -91,6 +101,8 @@ export default function NuevaOrdenSheet({ open, onOpenChange, productos, presupu
     if (!cliente) return
     setValue('clienteNombre',    cliente.nombre)
     setValue('clienteTelefono',  cliente.celular ?? cliente.telefono ?? '')
+    setValue('clienteLocalidad', cliente.localidad ?? '')
+    setValue('clienteCuit',      cliente.cuit ?? '')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchedClienteId])
 
@@ -131,6 +143,19 @@ export default function NuevaOrdenSheet({ open, onOpenChange, productos, presupu
         </SheetHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off" className="mt-4 flex flex-col gap-4">
+
+          <div className="space-y-1">
+            <Label htmlFor="empresaId">Empresa</Label>
+            <Select id="empresaId" {...form.register('empresaId')}>
+              <option value="">Seleccionar empresa...</option>
+              {empresasActivas.map(e => (
+                <option key={e.id} value={e.id}>{e.nombreFantasia}</option>
+              ))}
+            </Select>
+            {form.formState.errors.empresaId && (
+              <p className="text-sm text-destructive">{form.formState.errors.empresaId.message}</p>
+            )}
+          </div>
 
           {/* Cliente registrado (opcional) */}
           <div className="space-y-1">

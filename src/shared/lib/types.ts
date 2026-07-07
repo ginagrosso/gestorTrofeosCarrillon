@@ -67,12 +67,15 @@ export const TIPO_DOC_LABELS: Record<InsertCliente['tipoDoc'], string> = {
   CUI:  'CUI',
 }
 
+// El cliente no trabaja con decimales en los precios: se truncan (no se redondean) al cargar.
+const precioSinDecimales = z.number().nonnegative().transform(v => Math.trunc(v))
+
 export const insertArticuloSchema = z.object({
   codigo:      z.string().min(1, 'El código es obligatorio').max(50),
   descripcion: z.string().min(1, 'La descripción es obligatoria').max(300),
-  precioCosto: z.number().nonnegative(),
+  precioCosto: precioSinDecimales,
   porcIva:     z.number().nonnegative(),
-  precioVenta: z.number().nonnegative(),
+  precioVenta: precioSinDecimales,
   proveedorId: z.string().min(1),
   unidad:      z.string().max(20).default('unidad'),
   stock:       z.number().int().default(0),
@@ -102,9 +105,9 @@ export type ActualizarPreciosPorProveedor = z.infer<typeof actualizarPreciosPorP
 export const insertProductoSchema = z.object({
   codigo:       z.string().min(1, 'El código es obligatorio').max(50),
   descripcion:  z.string().min(1, 'La descripción es obligatoria').max(300),
-  precioCosto:  z.number().nonnegative(),
+  precioCosto:  precioSinDecimales,
   porcIva:      z.number().nonnegative(),
-  precioVenta:  z.number().nonnegative(),
+  precioVenta:  precioSinDecimales,
   stockActual:  z.number().int().default(0),
   categoria:    z.string().max(100).optional(),
   subcategoria: z.string().max(100).optional(),
@@ -192,6 +195,7 @@ export const presupuestoItemInputSchema = z.object({
 })
 
 export const insertPresupuestoSchema = z.object({
+  empresaId:        z.string().min(1, 'La empresa es obligatoria'),
   clienteId:        z.string().optional(),
   clienteNombre:    z.string().min(1, 'El nombre del cliente es obligatorio').max(200),
   clienteLocalidad: z.string().max(100).optional(),
@@ -223,6 +227,7 @@ export interface PresupuestoItem {
 export interface Presupuesto {
   id:               string
   numero:           number
+  empresaId?:       string | null
   clienteId?:       string | null
   clienteNombre:    string
   clienteLocalidad?: string | null
@@ -263,6 +268,7 @@ export const ordenItemInputSchema = z.object({
 
 export const insertOrdenSchema = z.object({
   fechaPrometida:   z.string().min(1, 'La fecha prometida es obligatoria').max(100),
+  empresaId:        z.string().min(1, 'La empresa es obligatoria'),
   clienteId:        z.string().optional(),
   clienteNombre:    z.string().min(1, 'El nombre del cliente es obligatorio').max(200),
   clienteTelefono:  z.string().max(50).optional(),
@@ -301,6 +307,7 @@ export interface OrdenDeTrabajo {
   id:               string
   numero:           number
   fechaPrometida:   string
+  empresaId?:       string | null
   clienteId?:       string | null
   clienteNombre:    string
   clienteTelefono?: string | null
@@ -404,4 +411,75 @@ export interface Recibo {
   fecha:          FirestoreTimestamp
   createdAt:      FirestoreTimestamp
   deletedAt:      FirestoreTimestamp | null
+}
+
+const NOTA_TIPOS_COMPROBANTE = ['NOTA_CREDITO_C', 'NOTA_DEBITO_C']
+
+export const comprobanteItemInputSchema = z.object({
+  codigo:         z.string().max(50).optional(),
+  descripcion:    z.string().min(1, 'La descripción es obligatoria').max(300),
+  cantidad:       z.number().positive('La cantidad debe ser mayor a 0'),
+  precioUnitario: z.number().nonnegative(),
+  bonificacion:   z.number().min(0).max(100).default(0),
+})
+
+export const insertComprobanteSchema = z.object({
+  tipo:             z.enum(TIPO_COMPROBANTE_VALUES),
+  empresaId:        z.string().min(1, 'La empresa es obligatoria'),
+  clienteId:        z.string().optional(),
+  clienteNombre:    z.string().min(1, 'El nombre del cliente es obligatorio').max(200),
+  clienteDireccion: z.string().max(300).optional(),
+  clienteLocalidad: z.string().max(100).optional(),
+  clienteCuit:      z.string().max(20).optional(),
+  clienteSitIva:    z.string().max(50).optional(),
+  condVenta:        z.string().max(50).default('CONTADO'),
+  observaciones:    z.string().max(500).optional(),
+  ordenId:          z.string().optional(),
+  presupuestoId:    z.string().optional(),
+  comprobanteRef:   z.string().max(50).optional(),
+  items:            z.array(comprobanteItemInputSchema).min(1, 'Agregá al menos un ítem'),
+}).refine(
+  data => !NOTA_TIPOS_COMPROBANTE.includes(data.tipo) || !!data.comprobanteRef,
+  { message: 'El comprobante de referencia es obligatorio para Notas de Crédito/Débito', path: ['comprobanteRef'] },
+)
+
+export type ComprobanteItemInput = z.infer<typeof comprobanteItemInputSchema>
+export type InsertComprobante    = z.infer<typeof insertComprobanteSchema>
+
+export interface ComprobanteItem {
+  id:             string
+  comprobanteId:  string
+  codigo?:        string | null
+  descripcion:    string
+  cantidad:       number
+  precioUnitario: number
+  bonificacion:   number
+  subtotal:       number
+}
+
+export interface Comprobante {
+  id:                string
+  tipo:              TipoComprobante
+  numero:            string
+  fecha:             FirestoreTimestamp
+  empresaId:         string
+  clienteId?:        string | null
+  clienteNombre:     string
+  clienteDireccion?: string | null
+  clienteLocalidad?: string | null
+  clienteCuit?:      string | null
+  clienteSitIva?:    string | null
+  condVenta:         string
+  observaciones?:    string | null
+  total:             number
+  ordenId?:          string | null
+  presupuestoId?:    string | null
+  comprobanteRef?:   string | null
+  createdAt:         FirestoreTimestamp
+  updatedAt:         FirestoreTimestamp
+  deletedAt:         FirestoreTimestamp | null
+}
+
+export interface ComprobanteConItems extends Comprobante {
+  items: ComprobanteItem[]
 }

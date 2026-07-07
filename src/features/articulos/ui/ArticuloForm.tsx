@@ -91,7 +91,7 @@ export default function ArticuloForm({ articulo, onSuccess }: ArticuloFormProps)
             name="precioCosto"
             control={form.control}
             render={({ field }) => (
-              <MoneyInput id="precioCosto" value={field.value ?? 0} onChange={field.onChange} />
+              <MoneyInput id="precioCosto" value={field.value ?? 0} onChange={field.onChange} allowDecimals={false} />
             )}
           />
           {form.formState.errors.precioCosto && (

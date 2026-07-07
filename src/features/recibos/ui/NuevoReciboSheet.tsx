@@ -20,16 +20,17 @@ import { Select } from '@/shared/ui/select'
 import { MoneyInput } from '@/shared/ui/money-input'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/shared/ui/sheet'
 import { useCreateRecibo } from '../hooks/useRecibosMutations'
-import { ReciboPDF } from './ReciboPDF'
+import { ReciboPDF, type ReciboItem } from './ReciboPDF'
 
 interface Props {
   open:         boolean
   onOpenChange: (open: boolean) => void
   orden:        OrdenDeTrabajo | null
+  items:        ReciboItem[]
 }
 
-async function generarBlob(recibo: Recibo): Promise<Blob> {
-  return pdf(<ReciboPDF recibo={recibo} />).toBlob()
+async function generarBlob(recibo: Recibo, items: ReciboItem[]): Promise<Blob> {
+  return pdf(<ReciboPDF recibo={recibo} items={items} />).toBlob()
 }
 
 function nombreArchivo(recibo: Recibo): string {
@@ -37,7 +38,7 @@ function nombreArchivo(recibo: Recibo): string {
   return `recibo-${recibo.ordenNumero ?? recibo.numero}-${cliente}.pdf`
 }
 
-export default function NuevoReciboSheet({ open, onOpenChange, orden }: Props) {
+export default function NuevoReciboSheet({ open, onOpenChange, orden, items }: Props) {
   const { mutate: createRecibo, isPending } = useCreateRecibo()
 
   const form = useForm<z.input<typeof insertReciboSchema>, unknown, InsertRecibo>({
@@ -72,7 +73,7 @@ export default function NuevoReciboSheet({ open, onOpenChange, orden }: Props) {
     createRecibo(data, {
       onSuccess: async (recibo) => {
         handleClose()
-        const blob = await generarBlob(recibo)
+        const blob = await generarBlob(recibo, items)
         const url  = URL.createObjectURL(blob)
         const win  = window.open(url, '_blank')
         win?.addEventListener('load', () => {
@@ -87,7 +88,7 @@ export default function NuevoReciboSheet({ open, onOpenChange, orden }: Props) {
     createRecibo(data, {
       onSuccess: async (recibo) => {
         handleClose()
-        const blob     = await generarBlob(recibo)
+        const blob     = await generarBlob(recibo, items)
         const filename = nombreArchivo(recibo)
         const file     = new File([blob], filename, { type: 'application/pdf' })
 

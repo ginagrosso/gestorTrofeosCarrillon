@@ -10,6 +10,7 @@ import ProductosPage from '@/pages/productos/ProductosPage'
 import VentasPage from '@/pages/ventas/VentasPage'
 import ComprasPage from '@/pages/compras/ComprasPage'
 import PresupuestosPage from '@/pages/presupuestos/PresupuestosPage'
+import ComprobantesPage from '@/pages/comprobantes/ComprobantesPage'
 import ConfiguracionPage from '@/pages/configuracion/ConfiguracionPage'
 
 const router = createBrowserRouter([
@@ -32,6 +33,7 @@ const router = createBrowserRouter([
           { path: '/ordenes', element: <VentasPage /> },
           { path: '/compras', element: <ComprasPage /> },
           { path: '/presupuestos', element: <PresupuestosPage /> },
+          { path: '/comprobantes', element: <ComprobantesPage /> },
           { path: '/configuracion', element: <ConfiguracionPage /> },
         ],
       },

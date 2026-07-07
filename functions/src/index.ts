@@ -14,13 +14,24 @@ import { presupuestosRouter } from './modules/presupuestos/presupuestos.routes.j
 import { ordenesRouter } from './modules/ordenes/ordenes.routes.js'
 import { recibosRouter } from './modules/recibos/recibos.routes.js'
 import { empresasRouter } from './modules/empresas/empresas.routes.js'
+import { comprobantesRouter } from './modules/comprobantes/comprobantes.routes.js'
 
-// Para controlar costos: máximo de instancias concurrentes por función.
-setGlobalOptions({ maxInstances: 10 })
+// Misma región que Firestore (southamerica-west1) para evitar latencia cross-region.
+// maxInstances: límite para controlar costos.
+setGlobalOptions({ region: 'southamerica-west1', maxInstances: 10 })
+
+// Solo el hosting de producción (ambos dominios que da Firebase) y el entorno de
+// desarrollo local (Vite) pueden llamar a la API.
+const ALLOWED_ORIGINS = [
+  'https://gestorcarrillon.web.app',
+  'https://gestorcarrillon.firebaseapp.com',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+]
 
 const app = express()
 
-app.use(cors({ origin: true }))
+app.use(cors({ origin: ALLOWED_ORIGINS }))
 app.use(express.json())
 
 app.use('/v1/proveedores', proveedoresRouter)
@@ -34,6 +45,7 @@ app.use('/v1/presupuestos', presupuestosRouter)
 app.use('/v1/ordenes', ordenesRouter)
 app.use('/v1/recibos', recibosRouter)
 app.use('/v1/empresas', empresasRouter)
+app.use('/v1/comprobantes', comprobantesRouter)
 
 app.use(errorHandler)
 

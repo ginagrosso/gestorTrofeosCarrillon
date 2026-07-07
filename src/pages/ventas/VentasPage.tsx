@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { pdf } from '@react-pdf/renderer'
-import { Plus, Printer, Pencil, Trash2, Receipt } from 'lucide-react'
+import { toast } from 'sonner'
+import { Plus, Printer, Pencil, Trash2, Receipt, FileText, Truck } from 'lucide-react'
 import { ImportExportButtons } from '@/shared/ui/import-export-buttons'
 import { ordenColumns } from '@/features/importar-exportar/lib/columns'
 import {
@@ -10,10 +11,29 @@ import {
   OrdenPDF,
   ActualizarPagoSheet,
 } from '@/features/ordenes'
-import { NuevoReciboSheet } from '@/features/recibos'
+import { NuevoReciboSheet, type ReciboItem } from '@/features/recibos'
+import {
+  ComprobantePDFOverlay,
+  ConfirmarComprobanteSheet,
+  useCreateComprobante,
+  type TipoComprobanteDesdeOrden,
+  type ComprobanteOrigen,
+  type ConfirmarComprobanteData,
+} from '@/features/comprobantes'
 import { useProductos } from '@/features/productos'
+import { useClientes } from '@/features/clientes'
 import { ordenesApi } from '@/shared/api/ordenes.api'
-import type { OrdenDeTrabajo, OrdenDeTrabajoConItems, Producto, EstadoOrden } from '@/shared/lib/types'
+import {
+  SIT_IVA_LABELS,
+  type Cliente,
+  type OrdenDeTrabajo,
+  type OrdenDeTrabajoConItems,
+  type Producto,
+  type EstadoOrden,
+  type ComprobanteItemInput,
+  type ComprobanteConItems,
+  type InsertComprobante,
+} from '@/shared/lib/types'
 import { formatFecha } from '@/shared/lib/date'
 import { formatMoney } from '@/shared/lib/money'
 import { usePagination } from '@/shared/hooks/usePagination'
@@ -44,6 +64,11 @@ const ESTADO_CLASS: Record<EstadoOrden, string> = {
   PAGADO:    'text-green-600 font-medium',
 }
 
+const TIPO_COMPROBANTE_LABEL: Record<TipoComprobanteDesdeOrden, string> = {
+  FACTURA_C: 'la factura',
+  REMITO:    'el remito',
+}
+
 async function obtenerDetalle(id: string): Promise<OrdenDeTrabajoConItems> {
   const res = await ordenesApi.getById(id)
   return res.data
@@ -53,15 +78,85 @@ async function generarBlob(detalle: OrdenDeTrabajoConItems, productos: Producto[
   return pdf(<OrdenPDF orden={detalle} productos={productos} />).toBlob()
 }
 
+async function imprimirComprobante(comprobante: ComprobanteConItems): Promise<void> {
+  const blob = await pdf(<ComprobantePDFOverlay comprobante={comprobante} />).toBlob()
+  const url  = URL.createObjectURL(blob)
+  const win  = window.open(url, '_blank')
+  win?.addEventListener('load', () => {
+    win.print()
+    URL.revokeObjectURL(url)
+  })
+}
+
+function construirItemsDesdeOrden(orden: OrdenDeTrabajoConItems, productos: Producto[]): ComprobanteItemInput[] {
+  const productoPorId = new Map(productos.map(p => [p.id, p]))
+  return orden.items.map(item => {
+    const producto = productoPorId.get(item.productoId)
+    return {
+      codigo:         producto?.codigo,
+      descripcion:    producto ? producto.descripcion : item.productoId,
+      cantidad:       item.cantidad,
+      precioUnitario: item.precioUnitario,
+      bonificacion:   0,
+    }
+  })
+}
+
+function construirItemsReciboDesdeOrden(orden: OrdenDeTrabajoConItems, productos: Producto[]): ReciboItem[] {
+  const productoPorId = new Map(productos.map(p => [p.id, p]))
+  return orden.items.map(item => {
+    const producto = productoPorId.get(item.productoId)
+    return {
+      descripcion:    producto ? producto.descripcion : item.productoId,
+      cantidad:       item.cantidad,
+      precioUnitario: item.precioUnitario,
+    }
+  })
+}
+
+interface ComprobanteContext extends ComprobanteOrigen {
+  empresaId:  string
+  ordenId:    string
+  clienteId?: string
+}
+
+// Si la OT está vinculada a un cliente registrado, usamos sus datos completos y
+// actuales (dirección, sit. IVA) — la OT en sí no guarda esos dos campos.
+function construirContextoDesdeOrden(
+  orden: OrdenDeTrabajoConItems,
+  productos: Producto[],
+  clientes: Cliente[],
+): ComprobanteContext {
+  const cliente = orden.clienteId ? clientes.find(c => c.id === orden.clienteId) : undefined
+  return {
+    empresaId:        orden.empresaId!,
+    ordenId:          orden.id,
+    clienteId:        orden.clienteId ?? undefined,
+    clienteNombre:    orden.clienteNombre,
+    clienteDireccion: cliente?.direccion ?? undefined,
+    clienteLocalidad: cliente?.localidad ?? orden.clienteLocalidad ?? undefined,
+    clienteCuit:      cliente?.cuit ?? orden.clienteCuit ?? undefined,
+    clienteSitIva:    cliente ? SIT_IVA_LABELS[cliente.situacionFiscal] : undefined,
+    condVenta:        orden.condVenta,
+    items:            construirItemsDesdeOrden(orden, productos),
+  }
+}
+
 export default function OrdenesPage() {
   const { data: ordenes, isLoading } = useOrdenes()
   const { data: productos } = useProductos()
+  const { data: clientes } = useClientes()
   const { mutate: deleteOrden, isPending: isDeleting } = useDeleteOrden()
+  const { mutate: createComprobante, isPending: isGenerandoComprobante } = useCreateComprobante()
 
   const [sheetOpen, setSheetOpen]       = useState(false)
   const [deletingItem, setDeletingItem] = useState<OrdenDeTrabajo | null>(null)
   const [pagoOrden, setPagoOrden]       = useState<OrdenDeTrabajo | null>(null)
   const [reciboOrden, setReciboOrden]   = useState<OrdenDeTrabajo | null>(null)
+  const [reciboItems, setReciboItems]   = useState<ReciboItem[]>([])
+  const [comprobanteSheetOpen, setComprobanteSheetOpen] = useState(false)
+  const [comprobanteTipo, setComprobanteTipo] = useState<TipoComprobanteDesdeOrden>('FACTURA_C')
+  const [comprobanteContext, setComprobanteContext] = useState<ComprobanteContext | null>(null)
 
   const rows = useMemo<OrdenRow[]>(
     () => (ordenes ?? []).map(o => ({ ...o, numeroStr: String(o.numero) })),
@@ -79,6 +174,48 @@ export default function OrdenesPage() {
     win?.addEventListener('load', () => {
       win.print()
       URL.revokeObjectURL(url)
+    })
+  }
+
+  const handleClickRecibo = async (o: OrdenDeTrabajo) => {
+    const detalle = await obtenerDetalle(o.id)
+    setReciboItems(construirItemsReciboDesdeOrden(detalle, productos ?? []))
+    setReciboOrden(o)
+  }
+
+  const handleClickComprobante = async (o: OrdenDeTrabajo, tipo: TipoComprobanteDesdeOrden) => {
+    if (!o.empresaId) {
+      toast.error(`Esta orden no tiene una empresa asignada (es de antes de este cambio) — no se puede generar ${TIPO_COMPROBANTE_LABEL[tipo]}.`)
+      return
+    }
+    const detalle = await obtenerDetalle(o.id)
+    setComprobanteContext(construirContextoDesdeOrden(detalle, productos ?? [], clientes ?? []))
+    setComprobanteTipo(tipo)
+    setComprobanteSheetOpen(true)
+  }
+
+  const handleConfirmarComprobante = (data: ConfirmarComprobanteData) => {
+    if (!comprobanteContext) return
+    const payload: InsertComprobante = {
+      tipo:             comprobanteTipo,
+      empresaId:        comprobanteContext.empresaId,
+      ordenId:          comprobanteContext.ordenId,
+      clienteId:        comprobanteContext.clienteId,
+      clienteNombre:    data.clienteNombre,
+      clienteDireccion: data.clienteDireccion,
+      clienteLocalidad: data.clienteLocalidad,
+      clienteCuit:      data.clienteCuit,
+      clienteSitIva:    data.clienteSitIva,
+      condVenta:        data.condVenta,
+      items:            comprobanteContext.items,
+    }
+
+    createComprobante(payload, {
+      onSuccess: async ({ data: comprobante }) => {
+        setComprobanteSheetOpen(false)
+        setComprobanteContext(null)
+        await imprimirComprobante(comprobante)
+      },
     })
   }
 
@@ -152,10 +289,28 @@ export default function OrdenesPage() {
                       variant="ghost"
                       size="icon"
                       title="Recibo por el total"
-                      onClick={() => setReciboOrden(o)}
+                      onClick={() => handleClickRecibo(o)}
                     >
                       <Receipt className="size-4" />
                       <span className="sr-only">Recibo por el total</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Factura C"
+                      onClick={() => handleClickComprobante(o, 'FACTURA_C')}
+                    >
+                      <FileText className="size-4" />
+                      <span className="sr-only">Factura C</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Remito"
+                      onClick={() => handleClickComprobante(o, 'REMITO')}
+                    >
+                      <Truck className="size-4" />
+                      <span className="sr-only">Remito</span>
                     </Button>
                     <Button
                       variant="ghost"
@@ -207,8 +362,18 @@ export default function OrdenesPage() {
 
       <NuevoReciboSheet
         open={!!reciboOrden}
-        onOpenChange={(open) => { if (!open) setReciboOrden(null) }}
+        onOpenChange={(open) => { if (!open) { setReciboOrden(null); setReciboItems([]) } }}
         orden={reciboOrden}
+        items={reciboItems}
+      />
+
+      <ConfirmarComprobanteSheet
+        open={comprobanteSheetOpen}
+        onOpenChange={(open) => { setComprobanteSheetOpen(open); if (!open) setComprobanteContext(null) }}
+        tipo={comprobanteTipo}
+        origen={comprobanteContext}
+        onConfirm={handleConfirmarComprobante}
+        isPending={isGenerandoComprobante}
       />
 
       <AlertDialog open={!!deletingItem} onOpenChange={(open) => { if (!open) setDeletingItem(null) }}>

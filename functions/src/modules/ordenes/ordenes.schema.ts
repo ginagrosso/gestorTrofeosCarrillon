@@ -21,6 +21,7 @@ export const ordenItemInputSchema = z.object({
 
 export const insertOrdenSchema = z.object({
   fechaPrometida:   z.string().min(1, 'La fecha prometida es obligatoria').max(100),
+  empresaId:        z.string().min(1, 'La empresa es obligatoria'),
   clienteId:        z.string().optional(),
   clienteNombre:    z.string().min(1, 'El nombre del cliente es obligatorio').max(200),
   clienteTelefono:  z.string().max(50).optional(),
@@ -56,6 +57,7 @@ export const ordenSchema = z.object({
   id:               z.string(),
   numero:           z.number(),
   fechaPrometida:   z.string(),
+  empresaId:        z.string().nullable().optional(),
   clienteId:        z.string().nullable().optional(),
   clienteNombre:    z.string(),
   clienteTelefono:  z.string().nullable().optional(),
