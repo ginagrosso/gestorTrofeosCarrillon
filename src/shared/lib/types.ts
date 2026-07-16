@@ -8,13 +8,16 @@ export interface FirestoreTimestamp {
 
 export const insertProveedorSchema = z.object({
   nombre:     z.string().min(1, 'El nombre es obligatorio').max(200),
-  contacto:   z.string().max(200).optional(),
   localidad:  z.string().max(100).optional(),
   direccion:  z.string().max(300).optional(),
   cuit:       z.string().max(20).optional(),
   sitIva:     z.enum(['RESPONSABLE_INSCRIPTO', 'MONOTRIBUTO', 'EXENTO', 'CONSUMIDOR_FINAL']),
+  contacto1:  z.string().max(200).optional(),
   telefono1:  z.string().max(30).optional(),
+  contacto2:  z.string().max(200).optional(),
   telefono2:  z.string().max(30).optional(),
+  contacto3:  z.string().max(200).optional(),
+  telefono3:  z.string().max(30).optional(),
   rubro:      z.string().max(100).optional(),
 })
 
@@ -43,8 +46,12 @@ export const insertClienteSchema = z.object({
   direccion:       z.string().max(300).optional(),
   localidad:       z.string().max(100).optional(),
   provincia:       z.string().max(100).optional(),
-  telefono:        z.string().max(30).optional(),
-  celular:         z.string().max(30).optional(),
+  contacto1:       z.string().max(200).optional(),
+  telefono1:       z.string().max(30).optional(),
+  contacto2:       z.string().max(200).optional(),
+  telefono2:       z.string().max(30).optional(),
+  contacto3:       z.string().max(200).optional(),
+  telefono3:       z.string().max(30).optional(),
   email:           z.string().max(200).optional()
     .refine(v => !v || z.string().email().safeParse(v).success, 'Email inválido'),
 })
@@ -387,7 +394,8 @@ export type UpdateEmpresa = z.infer<typeof updateEmpresaSchema>
 export type Empresa       = z.infer<typeof empresaSchema>
 
 export const insertReciboSchema = z.object({
-  clienteNombre: z.string().min(1, 'El nombre del cliente es obligatorio').max(200),
+  clienteId:     z.string().optional(),
+  clienteNombre: z.string().max(200).optional(),
   monto:         z.number().positive('El monto debe ser mayor a 0'),
   formaPago:     z.enum(FORMA_PAGO_VALUES),
   ordenId:       z.string().optional(),
@@ -401,7 +409,8 @@ export type InsertRecibo = z.infer<typeof insertReciboSchema>
 export interface Recibo {
   id:             string
   numero:         number
-  clienteNombre:  string
+  clienteId?:     string | null
+  clienteNombre?: string | null
   monto:          number
   formaPago:      FormaPago
   ordenId?:       string | null

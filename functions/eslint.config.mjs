@@ -18,4 +18,12 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Scripts puntuales de mantenimiento (no se deployan como Cloud Functions):
+    // necesitan loguear progreso para uso manual desde la terminal.
+    files: ['scripts/**'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
 )

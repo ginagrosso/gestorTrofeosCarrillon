@@ -11,7 +11,7 @@ import {
   FORMA_PAGO_VALUES,
   FORMA_PAGO_LABELS,
 } from '@/shared/lib/types'
-import { useClientes } from '@/features/clientes'
+import { useClientes, getClienteWhatsAppTelefono } from '@/features/clientes'
 import { useEmpresas } from '@/features/empresas'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
@@ -19,6 +19,7 @@ import { Label } from '@/shared/ui/label'
 import { Select } from '@/shared/ui/select'
 import { Combobox } from '@/shared/ui/combobox'
 import { MoneyInput } from '@/shared/ui/money-input'
+import { NumberInput } from '@/shared/ui/number-input'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/shared/ui/sheet'
 import { formatMoney } from '@/shared/lib/money'
 import { useCreateOrden } from '../hooks/useOrdenesMutations'
@@ -100,7 +101,7 @@ export default function NuevaOrdenSheet({ open, onOpenChange, productos, presupu
     const cliente = (clientes ?? []).find(c => c.id === watchedClienteId)
     if (!cliente) return
     setValue('clienteNombre',    cliente.nombre)
-    setValue('clienteTelefono',  cliente.celular ?? cliente.telefono ?? '')
+    setValue('clienteTelefono',  getClienteWhatsAppTelefono(cliente) ?? '')
     setValue('clienteLocalidad', cliente.localidad ?? '')
     setValue('clienteCuit',      cliente.cuit ?? '')
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -235,12 +236,12 @@ export default function NuevaOrdenSheet({ open, onOpenChange, productos, presupu
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <Label htmlFor={`cantidad-${index}`} className="text-xs">Cantidad</Label>
-                    <Input
-                      id={`cantidad-${index}`}
-                      type="number"
-                      min="1"
-                      step="1"
-                      {...form.register(`items.${index}.cantidad`, { valueAsNumber: true })}
+                    <Controller
+                      name={`items.${index}.cantidad`}
+                      control={form.control}
+                      render={({ field: f }) => (
+                        <NumberInput id={`cantidad-${index}`} value={f.value} onChange={f.onChange} allowDecimals={false} />
+                      )}
                     />
                   </div>
                   <div className="space-y-1">

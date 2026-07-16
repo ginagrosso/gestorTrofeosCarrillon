@@ -31,7 +31,12 @@ export default function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
       tipoDoc: 'DNI',
       cuit: '',
       direccion: '',
-      celular: '',
+      contacto1: '',
+      telefono1: '',
+      contacto2: '',
+      telefono2: '',
+      contacto3: '',
+      telefono3: '',
     },
   })
 
@@ -93,9 +98,20 @@ export default function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
         </div>
       </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="celular">Celular (opcional)</Label>
-        <Input id="celular" {...form.register('celular')} />
+      <div className="space-y-2">
+        <Label>Contactos (opcional, hasta 3)</Label>
+        {([1, 2, 3] as const).map(n => (
+          <div key={n} className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor={`contacto${n}`} className="text-xs">Contacto {n}</Label>
+              <Input id={`contacto${n}`} {...form.register(`contacto${n}`)} />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor={`telefono${n}`} className="text-xs">Teléfono {n}</Label>
+              <Input id={`telefono${n}`} {...form.register(`telefono${n}`)} />
+            </div>
+          </div>
+        ))}
       </div>
 
       <Button type="submit" disabled={isPending}>

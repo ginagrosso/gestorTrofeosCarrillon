@@ -9,8 +9,12 @@ export const insertClienteSchema = z.object({
   direccion:       z.string().max(300).optional(),
   localidad:       z.string().max(100).optional(),
   provincia:       z.string().max(100).optional(),
-  telefono:        z.string().max(30).optional(),
-  celular:         z.string().max(30).optional(),
+  contacto1:       z.string().max(200).optional(),
+  telefono1:       z.string().max(30).optional(),
+  contacto2:       z.string().max(200).optional(),
+  telefono2:       z.string().max(30).optional(),
+  contacto3:       z.string().max(200).optional(),
+  telefono3:       z.string().max(30).optional(),
   email:           z.string().max(200).optional()
     .refine(v => !v || z.string().email().safeParse(v).success, 'Email inválido'),
 })

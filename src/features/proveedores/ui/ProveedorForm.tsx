@@ -26,13 +26,16 @@ export default function ProveedorForm({ proveedor, onSuccess }: ProveedorFormPro
     resolver: zodResolver(insertProveedorSchema),
     defaultValues: proveedor ?? {
       nombre: '',
-      contacto: '',
       localidad: '',
       direccion: '',
       cuit: '',
       sitIva: 'RESPONSABLE_INSCRIPTO',
+      contacto1: '',
       telefono1: '',
+      contacto2: '',
       telefono2: '',
+      contacto3: '',
+      telefono3: '',
       rubro: '',
     },
   })
@@ -53,11 +56,6 @@ export default function ProveedorForm({ proveedor, onSuccess }: ProveedorFormPro
         {form.formState.errors.nombre && (
           <p className="text-sm text-destructive">{form.formState.errors.nombre.message}</p>
         )}
-      </div>
-
-      <div className="space-y-1">
-        <Label htmlFor="contacto">Contacto (opcional)</Label>
-        <Input id="contacto" {...form.register('contacto')} />
       </div>
 
       <div className="space-y-1">
@@ -86,12 +84,28 @@ export default function ProveedorForm({ proveedor, onSuccess }: ProveedorFormPro
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
+          <Label htmlFor="contacto1">Contacto 1 (opcional)</Label>
+          <Input id="contacto1" {...form.register('contacto1')} />
+        </div>
+        <div className="space-y-1">
           <Label htmlFor="telefono1">Teléfono 1 (opcional)</Label>
           <Input id="telefono1" {...form.register('telefono1')} />
         </div>
         <div className="space-y-1">
+          <Label htmlFor="contacto2">Contacto 2 (opcional)</Label>
+          <Input id="contacto2" {...form.register('contacto2')} />
+        </div>
+        <div className="space-y-1">
           <Label htmlFor="telefono2">Teléfono 2 (opcional)</Label>
           <Input id="telefono2" {...form.register('telefono2')} />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="contacto3">Contacto 3 (opcional)</Label>
+          <Input id="contacto3" {...form.register('contacto3')} />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="telefono3">Teléfono 3 (opcional)</Label>
+          <Input id="telefono3" {...form.register('telefono3')} />
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import { ArrowLeft, Pencil, MessageCircle } from 'lucide-react'
 import { useCliente, ClienteForm } from '@/features/clientes'
 import { useOrdenes } from '@/features/ordenes'
 import { SIT_IVA_LABELS, TIPO_DOC_LABELS, type EstadoOrden } from '@/shared/lib/types'
+import { getContactos } from '@/shared/lib/contactos'
 import { getWhatsAppUrl } from '@/shared/lib/whatsapp'
 import { formatMoney } from '@/shared/lib/money'
 import { Button } from '@/shared/ui/button'
@@ -64,8 +65,6 @@ export default function ClienteDetailPage() {
     )
   }
 
-  const whatsappNum = cliente.celular || cliente.telefono
-
   return (
     <div className="flex flex-col gap-6 p-4 max-w-4xl">
       <div>
@@ -95,24 +94,27 @@ export default function ClienteDetailPage() {
         <InfoField label="Localidad" value={cliente.localidad ?? ''} />
         <InfoField label="Provincia" value={cliente.provincia ?? ''} />
         <InfoField label="Email" value={cliente.email ?? ''} />
-        <div className="space-y-0.5">
-          <p className="text-xs text-muted-foreground">Teléfono</p>
-          <p className="text-sm">{cliente.telefono || '—'}</p>
-        </div>
-        <div className="space-y-0.5">
-          <p className="text-xs text-muted-foreground">Celular</p>
-          <div className="flex items-center gap-2">
-            <p className="text-sm">{cliente.celular || '—'}</p>
-            {whatsappNum && (
-              <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                <a href={getWhatsAppUrl(whatsappNum)} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="h-4 w-4 text-green-600" />
-                  <span className="sr-only">Abrir WhatsApp</span>
-                </a>
-              </Button>
-            )}
+      </div>
+
+      <div className="rounded-lg border bg-background p-5">
+        <h2 className="mb-3 text-sm font-semibold text-brand-brown">Contactos</h2>
+        {getContactos(cliente).map(c => (
+          <div key={c.slot} className="flex items-center justify-between gap-2 border-b py-2 last:border-b-0">
+            <div>
+              <p className="text-sm">{c.contacto || '—'}</p>
+              <p className="text-xs text-muted-foreground">{c.telefono}</p>
+            </div>
+            <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+              <a href={getWhatsAppUrl(c.telefono)} target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="h-4 w-4 text-green-600" />
+                <span className="sr-only">Abrir WhatsApp</span>
+              </a>
+            </Button>
           </div>
-        </div>
+        ))}
+        {getContactos(cliente).length === 0 && (
+          <p className="text-sm text-muted-foreground">Sin contactos cargados.</p>
+        )}
       </div>
 
       <div>
@@ -152,7 +154,7 @@ export default function ClienteDetailPage() {
       </div>
 
       <Sheet open={editOpen} onOpenChange={setEditOpen}>
-        <SheetContent>
+        <SheetContent className="overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Editar cliente</SheetTitle>
             <SheetDescription>Modificá los datos del cliente.</SheetDescription>

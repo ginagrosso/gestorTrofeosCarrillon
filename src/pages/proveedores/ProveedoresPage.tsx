@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash2, MessageCircle } from 'lucide-react'
 import { useProveedores, useDeleteProveedor, ProveedorForm } from '@/features/proveedores'
 import { useImportarProveedores, proveedorColumns } from '@/features/importar-exportar'
 import { SIT_IVA_LABELS, type Proveedor } from '@/shared/lib/types'
+import { getContactos } from '@/shared/lib/contactos'
 import { getWhatsAppUrl } from '@/shared/lib/whatsapp'
 import { usePagination } from '@/shared/hooks/usePagination'
 import { useSearch } from '@/shared/hooks/useSearch'
@@ -24,7 +25,10 @@ import {
   AlertDialogCancel,
 } from '@/shared/ui/alert-dialog'
 
-const PROVEEDOR_SEARCH_FIELDS: (keyof Proveedor)[] = ['nombre', 'contacto', 'localidad', 'rubro', 'cuit']
+const PROVEEDOR_SEARCH_FIELDS: (keyof Proveedor)[] = [
+  'nombre', 'localidad', 'rubro', 'cuit',
+  'contacto1', 'contacto2', 'contacto3',
+]
 
 export default function ProveedoresPage() {
   const { data: proveedores, isLoading } = useProveedores()
@@ -78,49 +82,49 @@ export default function ProveedoresPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>
-              <TableHead>Contacto</TableHead>
               <TableHead>Localidad</TableHead>
-              <TableHead>Teléfono</TableHead>
+              <TableHead>Contactos</TableHead>
               <TableHead>Situación IVA</TableHead>
               <TableHead>Rubro</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedItems.map((proveedor) => {
-              const whatsappPhone = proveedor.telefono1 || proveedor.telefono2
-
-              return (
-                <TableRow key={proveedor.id}>
-                  <TableCell className="font-medium">{proveedor.nombre}</TableCell>
-                  <TableCell>{proveedor.contacto || '—'}</TableCell>
-                  <TableCell>{proveedor.localidad || '—'}</TableCell>
-                  <TableCell>{proveedor.telefono1 || '—'}</TableCell>
-                  <TableCell>{SIT_IVA_LABELS[proveedor.sitIva]}</TableCell>
-                  <TableCell>{proveedor.rubro || '—'}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      {whatsappPhone && (
-                        <Button variant="ghost" size="icon" asChild>
-                          <a href={getWhatsAppUrl(whatsappPhone)} target="_blank" rel="noopener noreferrer">
-                            <MessageCircle className="text-green-600" />
-                            <span className="sr-only">Abrir WhatsApp</span>
-                          </a>
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(proveedor)}>
-                        <Pencil />
-                        <span className="sr-only">Editar</span>
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDeletingProveedor(proveedor)}>
-                        <Trash2 />
-                        <span className="sr-only">Eliminar</span>
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )
-            })}
+            {paginatedItems.map((proveedor) => (
+              <TableRow key={proveedor.id}>
+                <TableCell className="font-medium">{proveedor.nombre}</TableCell>
+                <TableCell>{proveedor.localidad || '—'}</TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    {getContactos(proveedor).map(c => (
+                      <div key={c.slot} className="flex items-center gap-1.5">
+                        <a href={getWhatsAppUrl(c.telefono)} target="_blank" rel="noopener noreferrer" title="Abrir WhatsApp">
+                          <MessageCircle className="size-4 shrink-0 text-green-600" />
+                        </a>
+                        <span className="text-sm whitespace-nowrap">
+                          {c.telefono}{c.contacto ? ` (${c.contacto})` : ''}
+                        </span>
+                      </div>
+                    ))}
+                    {getContactos(proveedor).length === 0 && <span className="text-muted-foreground">—</span>}
+                  </div>
+                </TableCell>
+                <TableCell>{SIT_IVA_LABELS[proveedor.sitIva]}</TableCell>
+                <TableCell>{proveedor.rubro || '—'}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(proveedor)}>
+                      <Pencil />
+                      <span className="sr-only">Editar</span>
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => setDeletingProveedor(proveedor)}>
+                      <Trash2 />
+                      <span className="sr-only">Eliminar</span>
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       )}
@@ -136,7 +140,7 @@ export default function ProveedoresPage() {
       )}
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent>
+        <SheetContent className="overflow-y-auto">
           <SheetHeader>
             <SheetTitle>{editingProveedor ? 'Editar proveedor' : 'Nuevo proveedor'}</SheetTitle>
             <SheetDescription>

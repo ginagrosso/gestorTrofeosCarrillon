@@ -3,13 +3,16 @@ import { Timestamp } from 'firebase-admin/firestore'
 
 export const insertProveedorSchema = z.object({
   nombre:     z.string().min(1).max(200),
-  contacto:   z.string().max(200).optional(),
   localidad:  z.string().max(100).optional(),
   direccion:  z.string().max(300).optional(),
   cuit:       z.string().max(20).optional(),
   sitIva:     z.enum(['RESPONSABLE_INSCRIPTO', 'MONOTRIBUTO', 'EXENTO', 'CONSUMIDOR_FINAL']),
+  contacto1:  z.string().max(200).optional(),
   telefono1:  z.string().max(30).optional(),
+  contacto2:  z.string().max(200).optional(),
   telefono2:  z.string().max(30).optional(),
+  contacto3:  z.string().max(200).optional(),
+  telefono3:  z.string().max(30).optional(),
   rubro:      z.string().max(100).optional(),
 })
 

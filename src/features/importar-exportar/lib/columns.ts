@@ -36,13 +36,16 @@ const toSitIva = (value: unknown): string => {
 export const proveedorColumns: ColumnMap<Proveedor> = {
   id:        { header: 'Id',           export: p => p.id },
   nombre:    { header: 'Nombre',        export: p => p.nombre,                 import: v => String(v).trim() },
-  contacto:  { header: 'Contacto',      export: p => p.contacto ?? '',         import: toOptionalString },
   localidad: { header: 'Localidad',     export: p => p.localidad ?? '',        import: toOptionalString },
   direccion: { header: 'Dirección',     export: p => p.direccion ?? '',        import: toOptionalString },
   cuit:      { header: 'CUIT',          export: p => p.cuit ?? '',             import: toOptionalString },
   sitIva:    { header: 'Situación IVA', aliases: ['Sit. IVA'], export: p => SIT_IVA_LABELS[p.sitIva], import: toSitIva },
+  contacto1: { header: 'Contacto 1', aliases: ['Contacto'],    export: p => p.contacto1 ?? '',   import: toOptionalString },
   telefono1: { header: 'Teléfono 1',    export: p => p.telefono1 ?? '',        import: toOptionalString },
+  contacto2: { header: 'Contacto 2',    export: p => p.contacto2 ?? '',        import: toOptionalString },
   telefono2: { header: 'Teléfono 2',    export: p => p.telefono2 ?? '',        import: toOptionalString },
+  contacto3: { header: 'Contacto 3',    export: p => p.contacto3 ?? '',        import: toOptionalString },
+  telefono3: { header: 'Teléfono 3',    export: p => p.telefono3 ?? '',        import: toOptionalString },
   rubro:     { header: 'Rubro',         export: p => p.rubro ?? '',            import: toOptionalString },
 }
 
@@ -55,8 +58,12 @@ export const clienteColumns: ColumnMap<Cliente> = {
   direccion:       { header: 'Dirección',        export: c => c.direccion ?? '',  import: toOptionalString },
   localidad:       { header: 'Localidad',        export: c => c.localidad ?? '',  import: toOptionalString },
   provincia:       { header: 'Provincia',        export: c => c.provincia ?? '',  import: toOptionalString },
-  telefono:        { header: 'Teléfono',         export: c => c.telefono ?? '',   import: toOptionalString },
-  celular:         { header: 'Celular',          export: c => c.celular ?? '',                   import: toOptionalString },
+  contacto1:       { header: 'Contacto 1',                   export: c => c.contacto1 ?? '', import: toOptionalString },
+  telefono1:       { header: 'Teléfono 1', aliases: ['Celular'], export: c => c.telefono1 ?? '', import: toOptionalString },
+  contacto2:       { header: 'Contacto 2',                   export: c => c.contacto2 ?? '', import: toOptionalString },
+  telefono2:       { header: 'Teléfono 2', aliases: ['Teléfono'], export: c => c.telefono2 ?? '', import: toOptionalString },
+  contacto3:       { header: 'Contacto 3',                   export: c => c.contacto3 ?? '', import: toOptionalString },
+  telefono3:       { header: 'Teléfono 3',                   export: c => c.telefono3 ?? '', import: toOptionalString },
   email:           { header: 'Email', aliases: ['e Mail'], export: c => c.email ?? '',           import: toEmail },
 }
 
