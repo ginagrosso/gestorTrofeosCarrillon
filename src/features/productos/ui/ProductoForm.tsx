@@ -7,6 +7,7 @@ import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 import { MoneyInput } from '@/shared/ui/money-input'
+import { NumberInput } from '@/shared/ui/number-input'
 import { formatMoney } from '@/shared/lib/money'
 import { useProductos } from '../hooks/useProductos'
 import { useProductoArticulos } from '../hooks/useProductoArticulos'
@@ -103,14 +104,26 @@ export default function ProductoForm({ producto, onSuccess }: ProductoFormProps)
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
           <Label htmlFor="porcIva">% IVA</Label>
-          <Input id="porcIva" type="number" step="0.01" {...form.register('porcIva', { valueAsNumber: true })} />
+          <Controller
+            name="porcIva"
+            control={form.control}
+            render={({ field }) => (
+              <NumberInput id="porcIva" value={field.value} onChange={field.onChange} />
+            )}
+          />
           {form.formState.errors.porcIva && (
             <p className="text-sm text-destructive">{form.formState.errors.porcIva.message}</p>
           )}
         </div>
         <div className="space-y-1">
           <Label htmlFor="stockActual">Stock</Label>
-          <Input id="stockActual" type="number" step="1" {...form.register('stockActual', { valueAsNumber: true })} />
+          <Controller
+            name="stockActual"
+            control={form.control}
+            render={({ field }) => (
+              <NumberInput id="stockActual" value={field.value} onChange={field.onChange} allowDecimals={false} />
+            )}
+          />
           {form.formState.errors.stockActual && (
             <p className="text-sm text-destructive">{form.formState.errors.stockActual.message}</p>
           )}
@@ -158,12 +171,10 @@ export default function ProductoForm({ producto, onSuccess }: ProductoFormProps)
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label htmlFor="recargo">Recargo %</Label>
-              <Input
+              <NumberInput
                 id="recargo"
-                type="number"
-                step="0.01"
                 value={recargo}
-                onChange={e => handleRecargoChange(Number(e.target.value))}
+                onChange={v => handleRecargoChange(v ?? 0)}
               />
               <p className="text-sm text-muted-foreground">Costo: ${formatMoney(precioCostoActual)}</p>
             </div>

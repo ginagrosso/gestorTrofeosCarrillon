@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Trash2 } from 'lucide-react'
 import { replaceProductoArticulosSchema, type ReplaceProductoArticulos, type ProductoArticulo, type Articulo } from '@/shared/lib/types'
 import { formatMoney } from '@/shared/lib/money'
 import { useArticulos } from '@/features/articulos'
 import { Button } from '@/shared/ui/button'
-import { Input } from '@/shared/ui/input'
+import { NumberInput } from '@/shared/ui/number-input'
 import { Label } from '@/shared/ui/label'
 import { Combobox } from '@/shared/ui/combobox'
 import { Skeleton } from '@/shared/ui/skeleton'
@@ -92,13 +92,7 @@ function ProductoArticulosEditor({ productoId, bom, articulos }: ProductoArticul
         </div>
         <div className="w-24 space-y-1">
           <Label>Cantidad</Label>
-          <Input
-            type="number"
-            step="0.01"
-            min="0"
-            value={cantidad}
-            onChange={e => setCantidad(Number(e.target.value))}
-          />
+          <NumberInput value={cantidad} onChange={v => setCantidad(v ?? 0)} />
         </div>
         <Button type="button" onClick={handleAdd}>Agregar</Button>
       </div>
@@ -124,11 +118,12 @@ function ProductoArticulosEditor({ productoId, bom, articulos }: ProductoArticul
                 <TableRow key={field.id}>
                   <TableCell>{articulo ? `${articulo.codigo} - ${articulo.descripcion}` : '—'}</TableCell>
                   <TableCell className="text-right">
-                    <Input
-                      type="number"
-                      step="0.01"
-                      className="text-right"
-                      {...form.register(`items.${index}.cantidad`, { valueAsNumber: true })}
+                    <Controller
+                      name={`items.${index}.cantidad`}
+                      control={form.control}
+                      render={({ field }) => (
+                        <NumberInput className="text-right" value={field.value} onChange={field.onChange} />
+                      )}
                     />
                   </TableCell>
                   <TableCell className="text-right">{formatMoney(articulo?.precioCosto ?? 0)}</TableCell>

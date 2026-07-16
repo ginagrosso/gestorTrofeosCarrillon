@@ -8,6 +8,7 @@ import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 import { Combobox } from '@/shared/ui/combobox'
 import { MoneyInput } from '@/shared/ui/money-input'
+import { NumberInput } from '@/shared/ui/number-input'
 import { useCreateArticulo, useUpdateArticulo } from '../hooks/useArticulosMutations'
 
 interface ArticuloFormProps {
@@ -100,7 +101,13 @@ export default function ArticuloForm({ articulo, onSuccess }: ArticuloFormProps)
         </div>
         <div className="space-y-1">
           <Label htmlFor="porcIva">% IVA</Label>
-          <Input id="porcIva" type="number" step="0.01" {...form.register('porcIva', { valueAsNumber: true })} />
+          <Controller
+            name="porcIva"
+            control={form.control}
+            render={({ field }) => (
+              <NumberInput id="porcIva" value={field.value} onChange={field.onChange} />
+            )}
+          />
           {form.formState.errors.porcIva && (
             <p className="text-sm text-destructive">{form.formState.errors.porcIva.message}</p>
           )}
@@ -110,7 +117,13 @@ export default function ArticuloForm({ articulo, onSuccess }: ArticuloFormProps)
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
           <Label htmlFor="stock">Stock</Label>
-          <Input id="stock" type="number" step="1" {...form.register('stock', { valueAsNumber: true })} />
+          <Controller
+            name="stock"
+            control={form.control}
+            render={({ field }) => (
+              <NumberInput id="stock" value={field.value} onChange={field.onChange} allowDecimals={false} />
+            )}
+          />
           {form.formState.errors.stock && (
             <p className="text-sm text-destructive">{form.formState.errors.stock.message}</p>
           )}

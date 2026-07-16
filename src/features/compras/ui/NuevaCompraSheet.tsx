@@ -11,6 +11,7 @@ import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 import { Combobox } from '@/shared/ui/combobox'
 import { MoneyInput } from '@/shared/ui/money-input'
+import { NumberInput } from '@/shared/ui/number-input'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/shared/ui/sheet'
 import { formatMoney } from '@/shared/lib/money'
 import { ArticuloComboboxConCrear } from './ArticuloComboboxConCrear'
@@ -139,12 +140,12 @@ export default function NuevaCompraSheet({ open, onOpenChange }: Props) {
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <Label htmlFor={`cantidad-${index}`} className="text-xs">Cantidad</Label>
-                    <Input
-                      id={`cantidad-${index}`}
-                      type="number"
-                      min="1"
-                      step="1"
-                      {...form.register(`items.${index}.cantidad`, { valueAsNumber: true })}
+                    <Controller
+                      name={`items.${index}.cantidad`}
+                      control={form.control}
+                      render={({ field: f }) => (
+                        <NumberInput id={`cantidad-${index}`} value={f.value} onChange={f.onChange} allowDecimals={false} />
+                      )}
                     />
                     {form.formState.errors.items?.[index]?.cantidad && (
                       <p className="text-xs text-destructive">

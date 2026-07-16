@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { actualizarPreciosPorProveedorSchema, type ActualizarPreciosPorProveedor } from '@/shared/lib/types'
 import { useProveedores } from '@/features/proveedores'
 import { Button } from '@/shared/ui/button'
-import { Input } from '@/shared/ui/input'
+import { NumberInput } from '@/shared/ui/number-input'
 import { Label } from '@/shared/ui/label'
 import { Combobox } from '@/shared/ui/combobox'
 import {
@@ -68,7 +68,13 @@ export default function ActualizarPreciosForm({ onSuccess }: ActualizarPreciosFo
 
       <div className="space-y-1">
         <Label htmlFor="porcentaje">% de aumento</Label>
-        <Input id="porcentaje" type="number" step="0.01" {...form.register('porcentaje', { valueAsNumber: true })} />
+        <Controller
+          name="porcentaje"
+          control={form.control}
+          render={({ field }) => (
+            <NumberInput id="porcentaje" value={field.value} onChange={field.onChange} />
+          )}
+        />
         <p className="text-sm text-muted-foreground">
           Usá un número negativo para bajar precios (ej: 10 = +10%, -10 = -10%)
         </p>

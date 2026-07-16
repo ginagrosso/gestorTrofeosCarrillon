@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { z } from 'zod'
 import {
@@ -11,6 +11,7 @@ import {
 } from '@/shared/lib/types'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
+import { NumberInput } from '@/shared/ui/number-input'
 import { Label } from '@/shared/ui/label'
 import { useCreateEmpresa, useUpdateEmpresa } from '../hooks/useEmpresasMutations'
 
@@ -153,11 +154,17 @@ export default function EmpresaForm({ empresa, onSuccess }: EmpresaFormProps) {
               </div>
               <div className="space-y-0.5">
                 <Label className="text-xs">Último N°</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  className="h-8 text-sm"
-                  {...form.register(`contadores.${tipo}.ultimoNumero`, { valueAsNumber: true })}
+                <Controller
+                  name={`contadores.${tipo}.ultimoNumero`}
+                  control={form.control}
+                  render={({ field }) => (
+                    <NumberInput
+                      className="h-8 text-sm"
+                      value={field.value}
+                      onChange={field.onChange}
+                      allowDecimals={false}
+                    />
+                  )}
                 />
               </div>
             </div>

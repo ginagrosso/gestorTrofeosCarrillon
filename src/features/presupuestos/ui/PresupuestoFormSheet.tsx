@@ -12,6 +12,7 @@ import { Label } from '@/shared/ui/label'
 import { Select } from '@/shared/ui/select'
 import { Combobox } from '@/shared/ui/combobox'
 import { MoneyInput } from '@/shared/ui/money-input'
+import { NumberInput } from '@/shared/ui/number-input'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/shared/ui/sheet'
 import { formatMoney } from '@/shared/lib/money'
 import { useCreatePresupuesto, useUpdatePresupuesto } from '../hooks/usePresupuestosMutations'
@@ -210,12 +211,12 @@ export default function PresupuestoFormSheet({ open, onOpenChange, presupuesto, 
             </div>
             <div className="space-y-1">
               <Label htmlFor="validezDias">Validez (días)</Label>
-              <Input
-                id="validezDias"
-                type="number"
-                min="1"
-                step="1"
-                {...form.register('validezDias', { valueAsNumber: true })}
+              <Controller
+                name="validezDias"
+                control={form.control}
+                render={({ field }) => (
+                  <NumberInput id="validezDias" value={field.value} onChange={field.onChange} allowDecimals={false} />
+                )}
               />
             </div>
           </div>
@@ -258,12 +259,12 @@ export default function PresupuestoFormSheet({ open, onOpenChange, presupuesto, 
                 <div className="grid grid-cols-3 gap-2">
                   <div className="space-y-1">
                     <Label htmlFor={`cantidad-${index}`} className="text-xs">Cantidad</Label>
-                    <Input
-                      id={`cantidad-${index}`}
-                      type="number"
-                      min="1"
-                      step="1"
-                      {...form.register(`items.${index}.cantidad`, { valueAsNumber: true })}
+                    <Controller
+                      name={`items.${index}.cantidad`}
+                      control={form.control}
+                      render={({ field: f }) => (
+                        <NumberInput id={`cantidad-${index}`} value={f.value} onChange={f.onChange} allowDecimals={false} />
+                      )}
                     />
                   </div>
                   <div className="space-y-1">
@@ -278,13 +279,12 @@ export default function PresupuestoFormSheet({ open, onOpenChange, presupuesto, 
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor={`bonif-${index}`} className="text-xs">Bonif. %</Label>
-                    <Input
-                      id={`bonif-${index}`}
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      {...form.register(`items.${index}.bonificacion`, { valueAsNumber: true })}
+                    <Controller
+                      name={`items.${index}.bonificacion`}
+                      control={form.control}
+                      render={({ field: f }) => (
+                        <NumberInput id={`bonif-${index}`} value={f.value} onChange={f.onChange} />
+                      )}
                     />
                   </div>
                 </div>
