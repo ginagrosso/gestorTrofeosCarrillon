@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
 import { pdf } from '@react-pdf/renderer'
+import { toast } from 'sonner'
 import { Plus, Pencil, Trash2, Printer, Share2, ClipboardList } from 'lucide-react'
 import { usePresupuestos, usePresupuesto, useDeletePresupuesto, PresupuestoFormSheet, PresupuestoPDF } from '@/features/presupuestos'
 import { NuevaOrdenSheet } from '@/features/ordenes'
 import { useProductos } from '@/features/productos'
+import { useEmpresas } from '@/features/empresas'
 import { presupuestosApi } from '@/shared/api/presupuestos.api'
-import type { Presupuesto, Producto, PresupuestoConItems } from '@/shared/lib/types'
+import type { Presupuesto, Producto, PresupuestoConItems, Empresa } from '@/shared/lib/types'
 import { formatFecha } from '@/shared/lib/date'
 import { formatMoney } from '@/shared/lib/money'
 import { usePagination } from '@/shared/hooks/usePagination'
@@ -30,8 +32,8 @@ type PresupuestoRow = Presupuesto & { numeroStr: string }
 
 const SEARCH_FIELDS: (keyof PresupuestoRow)[] = ['clienteNombre', 'clienteLocalidad', 'numeroStr']
 
-async function generarBlob(detalle: PresupuestoConItems, productos: Producto[]): Promise<Blob> {
-  return pdf(<PresupuestoPDF presupuesto={detalle} productos={productos} />).toBlob()
+async function generarBlob(detalle: PresupuestoConItems, productos: Producto[], empresa: Empresa): Promise<Blob> {
+  return pdf(<PresupuestoPDF presupuesto={detalle} productos={productos} empresa={empresa} />).toBlob()
 }
 
 function nombreArchivo(p: Presupuesto): string {
@@ -47,6 +49,7 @@ async function obtenerDetalle(id: string): Promise<PresupuestoConItems> {
 export default function PresupuestosPage() {
   const { data: presupuestos, isLoading } = usePresupuestos()
   const { data: productos } = useProductos()
+  const { data: empresas } = useEmpresas()
   const { mutate: deletePresupuesto, isPending: isDeleting } = useDeletePresupuesto()
 
   const [sheetOpen, setSheetOpen]           = useState(false)
@@ -56,6 +59,11 @@ export default function PresupuestosPage() {
   const [otPresupuesto, setOtPresupuesto]   = useState<PresupuestoConItems | null>(null)
 
   const { data: editingPresupuesto } = usePresupuesto(editingId)
+
+  const empresaNombrePorId = useMemo(
+    () => new Map((empresas ?? []).map(e => [e.id, e.nombreFantasia])),
+    [empresas],
+  )
 
   const rows = useMemo<PresupuestoRow[]>(
     () => (presupuestos ?? []).map(p => ({ ...p, numeroStr: String(p.numero) })),
@@ -88,7 +96,12 @@ export default function PresupuestosPage() {
 
   const handleImprimir = async (p: Presupuesto) => {
     const detalle = await obtenerDetalle(p.id)
-    const blob = await generarBlob(detalle, productos ?? [])
+    const empresa = (empresas ?? []).find(e => e.id === detalle.empresaId)
+    if (!empresa) {
+      toast.error('No se encontró la empresa del presupuesto')
+      return
+    }
+    const blob = await generarBlob(detalle, productos ?? [], empresa)
 
     const downloadUrl = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -107,12 +120,17 @@ export default function PresupuestosPage() {
 
   const handleWhatsApp = async (p: Presupuesto) => {
     const detalle = await obtenerDetalle(p.id)
-    const blob = await generarBlob(detalle, productos ?? [])
+    const empresa = (empresas ?? []).find(e => e.id === detalle.empresaId)
+    if (!empresa) {
+      toast.error('No se encontró la empresa del presupuesto')
+      return
+    }
+    const blob = await generarBlob(detalle, productos ?? [], empresa)
     const filename = nombreArchivo(p)
     const file = new File([blob], filename, { type: 'application/pdf' })
 
     if (navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ files: [file], title: 'Presupuesto Trofeos Carrillon Siglo 21' })
+      await navigator.share({ files: [file], title: `Presupuesto ${empresa.nombreFantasia}` })
     } else {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -121,7 +139,7 @@ export default function PresupuestosPage() {
       a.click()
       URL.revokeObjectURL(url)
       window.open(
-        `https://web.whatsapp.com/send?text=${encodeURIComponent('Hola, te envío el presupuesto de Trofeos Carrillon Siglo 21.')}`,
+        `https://web.whatsapp.com/send?text=${encodeURIComponent(`Hola, te envío el presupuesto de ${empresa.nombreFantasia}.`)}`,
         '_blank',
       )
     }
@@ -155,6 +173,7 @@ export default function PresupuestosPage() {
             <TableRow>
               <TableHead>N°</TableHead>
               <TableHead>Fecha</TableHead>
+              <TableHead>Empresa</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Localidad</TableHead>
               <TableHead className="text-right">Total</TableHead>
@@ -166,6 +185,7 @@ export default function PresupuestosPage() {
               <TableRow key={p.id}>
                 <TableCell className="font-mono text-muted-foreground">{p.numero}</TableCell>
                 <TableCell>{formatFecha(p.createdAt)}</TableCell>
+                <TableCell>{empresaNombrePorId.get(p.empresaId ?? '') ?? '—'}</TableCell>
                 <TableCell>{p.clienteNombre}</TableCell>
                 <TableCell>{p.clienteLocalidad || '—'}</TableCell>
                 <TableCell className="text-right">{formatMoney(p.total)}</TableCell>

@@ -1,5 +1,5 @@
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer'
-import type { PresupuestoConItems, Producto } from '@/shared/lib/types'
+import type { PresupuestoConItems, Producto, Empresa } from '@/shared/lib/types'
 
 const BRAND_BROWN = '#1a1a1a'
 const BRAND_GOLD  = '#999'
@@ -48,9 +48,10 @@ const fecha = (ts: { _seconds: number }) =>
 interface Props {
   presupuesto: PresupuestoConItems
   productos:   Producto[]
+  empresa:     Empresa
 }
 
-export function PresupuestoPDF({ presupuesto, productos }: Props) {
+export function PresupuestoPDF({ presupuesto, productos, empresa }: Props) {
   const productoPorId = new Map(productos.map(p => [p.id, p]))
 
   return (
@@ -59,10 +60,12 @@ export function PresupuestoPDF({ presupuesto, productos }: Props) {
         {/* Encabezado */}
         <View style={s.headerRow}>
           <View style={s.empresa}>
-            <Text style={s.empresaNombre}>Trofeos Carrillon Siglo 21</Text>
-            <Text style={s.empresaInfo}>Av. Italia 947 — Resistencia, Chaco</Text>
-            <Text style={s.empresaInfo}>Tel: 3624-103544</Text>
-            <Text style={s.empresaInfo}>carrillonventas@gmail.com</Text>
+            <Text style={s.empresaNombre}>{empresa.razonSocial}</Text>
+            <Text style={s.empresaInfo}>{empresa.nombreFantasia}</Text>
+            <Text style={s.empresaInfo}>{empresa.domicilio} — {empresa.localidad}</Text>
+            <Text style={s.empresaInfo}>CUIT: {empresa.cuit} · IIBB: {empresa.iibb}</Text>
+            <Text style={s.empresaInfo}>Inicio de actividades: {empresa.fechaInicioAct}</Text>
+            <Text style={s.empresaInfo}>{empresa.condIva}</Text>
           </View>
           <View>
             <Text style={s.docLabel}>PRESUPUESTO</Text>
@@ -153,7 +156,7 @@ export function PresupuestoPDF({ presupuesto, productos }: Props) {
         ) : null}
 
         <Text style={s.footer}>
-          Trofeos Carrillon Siglo 21 · Av. Italia 947, Resistencia, Chaco · Tel: 3624-103544
+          {empresa.nombreFantasia} · {empresa.domicilio}, {empresa.localidad} · CUIT: {empresa.cuit}
         </Text>
       </Page>
     </Document>
