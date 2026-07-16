@@ -3,7 +3,8 @@ import { Timestamp } from 'firebase-admin/firestore'
 import { FORMA_PAGO_VALUES } from '../ordenes/ordenes.schema.js'
 
 export const insertReciboSchema = z.object({
-  clienteNombre: z.string().min(1, 'El nombre del cliente es obligatorio').max(200),
+  clienteId:     z.string().optional(),
+  clienteNombre: z.string().max(200).optional(),
   monto:         z.number().positive('El monto debe ser mayor a 0'),
   formaPago:     z.enum(FORMA_PAGO_VALUES),
   ordenId:       z.string().optional(),
@@ -17,7 +18,8 @@ export const reciboParamsSchema = z.object({ id: z.string().min(1) })
 export const reciboSchema = z.object({
   id:            z.string(),
   numero:        z.number(),
-  clienteNombre: z.string(),
+  clienteId:     z.string().nullable().optional(),
+  clienteNombre: z.string().nullable().optional(),
   monto:         z.number(),
   formaPago:     z.enum(FORMA_PAGO_VALUES),
   ordenId:       z.string().nullable().optional(),

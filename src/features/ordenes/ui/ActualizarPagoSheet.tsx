@@ -35,7 +35,7 @@ async function generarBlob(recibo: Recibo): Promise<Blob> {
 }
 
 function nombreArchivo(recibo: Recibo): string {
-  const cliente = recibo.clienteNombre.trim().replace(/[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ ]/g, '').replace(/\s+/g, '-')
+  const cliente = (recibo.clienteNombre?.trim() || 'cliente').replace(/[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ ]/g, '').replace(/\s+/g, '-')
   return `recibo-${recibo.ordenNumero ?? recibo.numero}-${cliente}.pdf`
 }
 
@@ -85,6 +85,7 @@ export default function ActualizarPagoSheet({ open, onOpenChange, orden }: Props
           return
         }
         const reciboData: InsertRecibo = {
+          clienteId:     orden.clienteId ?? undefined,
           clienteNombre: orden.clienteNombre,
           monto:         data.montoEntrega,  // solo el pago de hoy en el recibo
           formaPago:     data.formaPago,

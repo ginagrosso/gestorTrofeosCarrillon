@@ -16,11 +16,11 @@ export interface ReciboItem {
   precioUnitario: number
 }
 
-const TICKET_WIDTH = 300
-
 const s = StyleSheet.create({
-  page:          { paddingTop: 40, fontFamily: 'Helvetica', fontSize: 9, color: '#1a1a1a', alignItems: 'center' },
-  ticket:        { width: TICKET_WIDTH },
+  page:          { flexDirection: 'column', fontFamily: 'Helvetica', fontSize: 9, color: '#1a1a1a', paddingHorizontal: 48 },
+  half:          { flex: 1, justifyContent: 'center' },
+  ticket:        { width: '100%' },
+  copia:         { fontSize: 7, color: '#999', textAlign: 'center', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 },
   nombre:        { fontSize: 12, fontFamily: 'Helvetica-Bold', color: BRAND_BROWN, textAlign: 'center' },
   info:          { fontSize: 8, color: '#555', textAlign: 'center', marginTop: 2 },
   divider:       { marginVertical: 8, borderBottomWidth: 1, borderBottomColor: '#999', borderBottomStyle: 'dashed' },
@@ -39,6 +39,9 @@ const s = StyleSheet.create({
   totalRow:      { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
   totalLabel:    { fontSize: 11, fontFamily: 'Helvetica-Bold', color: BRAND_BROWN },
   totalVal:      { fontSize: 13, fontFamily: 'Helvetica-Bold', color: BRAND_BROWN },
+  cutRow:        { height: 24, flexDirection: 'row', alignItems: 'center' },
+  cutDash:       { flex: 1, borderTopWidth: 1, borderTopColor: '#999', borderTopStyle: 'dashed' },
+  cutLabel:      { fontSize: 7, color: '#999', marginHorizontal: 6 },
 })
 
 const money = (n: number) =>
@@ -54,65 +57,86 @@ interface Props {
   items?: ReciboItem[]
 }
 
+function Ticket({ recibo, items, copia }: { recibo: Recibo; items: ReciboItem[]; copia: string }) {
+  return (
+    <View style={s.ticket}>
+      <Text style={s.copia}>{copia}</Text>
+      <Text style={s.nombre}>Trofeos Carrillon Siglo 21</Text>
+      <Text style={s.info}>Av. Italia 947 — Resistencia, Chaco</Text>
+      <Text style={s.info}>Tel: 3624-103544</Text>
+
+      <View style={s.divider} />
+
+      <Text style={s.docLabel}>RECIBO DE PAGO</Text>
+      <Text style={s.docFecha}>{fechaLarga(recibo.fecha)}</Text>
+
+      <View style={s.divider} />
+
+      {recibo.clienteNombre ? (
+        <View style={s.row}>
+          <Text style={s.rowLabel}>Cliente:</Text>
+          <Text style={s.rowVal}>{recibo.clienteNombre}</Text>
+        </View>
+      ) : null}
+      <View style={s.row}>
+        <Text style={s.rowLabel}>Forma de pago:</Text>
+        <Text style={s.rowVal}>{FORMA_PAGO_LABELS[recibo.formaPago]}</Text>
+      </View>
+      {recibo.observaciones ? (
+        <View style={s.row}>
+          <Text style={s.rowLabel}>Obs.:</Text>
+          <Text style={s.rowVal}>{recibo.observaciones}</Text>
+        </View>
+      ) : null}
+
+      {items.length > 0 ? (
+        <>
+          <View style={s.divider} />
+          <View style={s.tableHeader}>
+            <Text style={[s.tableHeaderTxt, s.colDesc]}>Descripción</Text>
+            <Text style={[s.tableHeaderTxt, s.colCant]}>Cant.</Text>
+            <Text style={[s.tableHeaderTxt, s.colPrecio]}>P/Unit.</Text>
+            <Text style={[s.tableHeaderTxt, s.colSubtotal]}>Subtotal</Text>
+          </View>
+          {items.map((item, i) => (
+            <View key={i} style={s.itemRow}>
+              <Text style={s.colDesc}>{item.descripcion}</Text>
+              <Text style={s.colCant}>{item.cantidad}</Text>
+              <Text style={s.colPrecio}>{money(item.precioUnitario)}</Text>
+              <Text style={s.colSubtotal}>{money(item.cantidad * item.precioUnitario)}</Text>
+            </View>
+          ))}
+        </>
+      ) : null}
+
+      <View style={s.divider} />
+
+      <View style={s.totalRow}>
+        <Text style={s.totalLabel}>TOTAL</Text>
+        <Text style={s.totalVal}>{money(recibo.monto)}</Text>
+      </View>
+
+      <View style={s.divider} />
+    </View>
+  )
+}
+
 export function ReciboPDF({ recibo, items = [] }: Props) {
   return (
     <Document>
       <Page size="A4" style={s.page}>
-        <View style={s.ticket}>
-          <Text style={s.nombre}>Trofeos Carrillon Siglo 21</Text>
-          <Text style={s.info}>Av. Italia 947 — Resistencia, Chaco</Text>
-          <Text style={s.info}>Tel: 3624-103544</Text>
+        <View style={s.half}>
+          <Ticket recibo={recibo} items={items} copia="Copia cliente" />
+        </View>
 
-          <View style={s.divider} />
+        <View style={s.cutRow}>
+          <View style={s.cutDash} />
+          <Text style={s.cutLabel}>- - - cortar aquí - - -</Text>
+          <View style={s.cutDash} />
+        </View>
 
-          <Text style={s.docLabel}>RECIBO DE PAGO</Text>
-          <Text style={s.docFecha}>{fechaLarga(recibo.fecha)}</Text>
-
-          <View style={s.divider} />
-
-          <View style={s.row}>
-            <Text style={s.rowLabel}>Cliente:</Text>
-            <Text style={s.rowVal}>{recibo.clienteNombre}</Text>
-          </View>
-          <View style={s.row}>
-            <Text style={s.rowLabel}>Forma de pago:</Text>
-            <Text style={s.rowVal}>{FORMA_PAGO_LABELS[recibo.formaPago]}</Text>
-          </View>
-          {recibo.observaciones ? (
-            <View style={s.row}>
-              <Text style={s.rowLabel}>Obs.:</Text>
-              <Text style={s.rowVal}>{recibo.observaciones}</Text>
-            </View>
-          ) : null}
-
-          {items.length > 0 ? (
-            <>
-              <View style={s.divider} />
-              <View style={s.tableHeader}>
-                <Text style={[s.tableHeaderTxt, s.colDesc]}>Descripción</Text>
-                <Text style={[s.tableHeaderTxt, s.colCant]}>Cant.</Text>
-                <Text style={[s.tableHeaderTxt, s.colPrecio]}>P/Unit.</Text>
-                <Text style={[s.tableHeaderTxt, s.colSubtotal]}>Subtotal</Text>
-              </View>
-              {items.map((item, i) => (
-                <View key={i} style={s.itemRow}>
-                  <Text style={s.colDesc}>{item.descripcion}</Text>
-                  <Text style={s.colCant}>{item.cantidad}</Text>
-                  <Text style={s.colPrecio}>{money(item.precioUnitario)}</Text>
-                  <Text style={s.colSubtotal}>{money(item.cantidad * item.precioUnitario)}</Text>
-                </View>
-              ))}
-            </>
-          ) : null}
-
-          <View style={s.divider} />
-
-          <View style={s.totalRow}>
-            <Text style={s.totalLabel}>TOTAL</Text>
-            <Text style={s.totalVal}>{money(recibo.monto)}</Text>
-          </View>
-
-          <View style={s.divider} />
+        <View style={s.half}>
+          <Ticket recibo={recibo} items={items} copia="Copia local" />
         </View>
       </Page>
     </Document>

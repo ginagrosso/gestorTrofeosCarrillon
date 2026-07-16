@@ -31,7 +31,8 @@ export const recibosRepository = {
       tx.set(counterRef, { ultimo: numero }, { merge: true })
       tx.set(reciboRef, {
         numero,
-        clienteNombre: data.clienteNombre,
+        clienteId:     data.clienteId  ?? null,
+        clienteNombre: data.clienteNombre ?? null,
         monto:         data.monto,
         formaPago:     data.formaPago,
         ordenId:       data.ordenId    ?? null,
@@ -47,7 +48,8 @@ export const recibosRepository = {
     return {
       id: reciboRef.id,
       numero,
-      clienteNombre: data.clienteNombre,
+      clienteId:     data.clienteId  ?? null,
+      clienteNombre: data.clienteNombre ?? null,
       monto:         data.monto,
       formaPago:     data.formaPago,
       ordenId:       data.ordenId    ?? null,
