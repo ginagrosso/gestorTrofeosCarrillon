@@ -11,6 +11,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      includeAssets: ['favicon.ico', 'favicon.png', 'apple-touch-icon.png'],
       workbox: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
