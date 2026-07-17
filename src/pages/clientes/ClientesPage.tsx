@@ -85,8 +85,10 @@ export default function ClientesPage() {
               <TableHead>Nombre</TableHead>
               <TableHead>Documento</TableHead>
               <TableHead>Situación IVA</TableHead>
+              <TableHead>Dirección</TableHead>
               <TableHead>Localidad</TableHead>
               <TableHead>Provincia</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>Contactos</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
@@ -101,8 +103,10 @@ export default function ClientesPage() {
                 </TableCell>
                 <TableCell>{cliente.cuit ? `${TIPO_DOC_LABELS[cliente.tipoDoc]} ${cliente.cuit}` : '—'}</TableCell>
                 <TableCell>{SIT_IVA_LABELS[cliente.situacionFiscal]}</TableCell>
+                <TableCell>{cliente.direccion || '—'}</TableCell>
                 <TableCell>{cliente.localidad || '—'}</TableCell>
                 <TableCell>{cliente.provincia || '—'}</TableCell>
+                <TableCell>{cliente.email || '—'}</TableCell>
                 <TableCell>
                   <div className="flex flex-col gap-1">
                     {getContactos(cliente).map(c => (

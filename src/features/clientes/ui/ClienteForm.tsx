@@ -31,6 +31,7 @@ export default function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
       tipoDoc: 'DNI',
       cuit: '',
       direccion: '',
+      email: '',
       contacto1: '',
       telefono1: '',
       contacto2: '',
@@ -96,6 +97,14 @@ export default function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
           <Label htmlFor="provincia">Provincia (opcional)</Label>
           <Input id="provincia" {...form.register('provincia')} />
         </div>
+      </div>
+
+      <div className="space-y-1">
+        <Label htmlFor="email">Email (opcional)</Label>
+        <Input id="email" type="email" {...form.register('email')} />
+        {form.formState.errors.email && (
+          <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+        )}
       </div>
 
       <div className="space-y-2">
