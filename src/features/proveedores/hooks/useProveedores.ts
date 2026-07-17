@@ -5,5 +5,5 @@ export const useProveedores = () =>
   useQuery({
     queryKey: ['proveedores'],
     queryFn:  () => proveedoresApi.list(),
-    select:   res => res.data,
+    select:   res => [...res.data].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')),
   })
