@@ -22,10 +22,12 @@ import {
 } from '@/features/comprobantes'
 import { useProductos } from '@/features/productos'
 import { useClientes } from '@/features/clientes'
+import { useEmpresas } from '@/features/empresas'
 import { ordenesApi } from '@/shared/api/ordenes.api'
 import {
   SIT_IVA_LABELS,
   type Cliente,
+  type Empresa,
   type OrdenDeTrabajo,
   type OrdenDeTrabajoConItems,
   type Producto,
@@ -74,8 +76,8 @@ async function obtenerDetalle(id: string): Promise<OrdenDeTrabajoConItems> {
   return res.data
 }
 
-async function generarBlob(detalle: OrdenDeTrabajoConItems, productos: Producto[]): Promise<Blob> {
-  return pdf(<OrdenPDF orden={detalle} productos={productos} />).toBlob()
+async function generarBlob(detalle: OrdenDeTrabajoConItems, productos: Producto[], empresa: Empresa): Promise<Blob> {
+  return pdf(<OrdenPDF orden={detalle} productos={productos} empresa={empresa} />).toBlob()
 }
 
 async function imprimirComprobante(comprobante: ComprobanteConItems): Promise<void> {
@@ -146,6 +148,7 @@ export default function OrdenesPage() {
   const { data: ordenes, isLoading } = useOrdenes()
   const { data: productos } = useProductos()
   const { data: clientes } = useClientes()
+  const { data: empresas } = useEmpresas()
   const { mutate: deleteOrden, isPending: isDeleting } = useDeleteOrden()
   const { mutate: createComprobante, isPending: isGenerandoComprobante } = useCreateComprobante()
 
@@ -158,6 +161,11 @@ export default function OrdenesPage() {
   const [comprobanteTipo, setComprobanteTipo] = useState<TipoComprobanteDesdeOrden>('FACTURA_C')
   const [comprobanteContext, setComprobanteContext] = useState<ComprobanteContext | null>(null)
 
+  const empresaNombrePorId = useMemo(
+    () => new Map((empresas ?? []).map(e => [e.id, e.nombreFantasia])),
+    [empresas],
+  )
+
   const rows = useMemo<OrdenRow[]>(
     () => (ordenes ?? []).map(o => ({ ...o, numeroStr: String(o.numero) })),
     [ordenes],
@@ -168,9 +176,14 @@ export default function OrdenesPage() {
 
   const handleImprimir = async (o: OrdenDeTrabajo) => {
     const detalle = await obtenerDetalle(o.id)
-    const blob    = await generarBlob(detalle, productos ?? [])
-    const url     = URL.createObjectURL(blob)
-    const win     = window.open(url, '_blank')
+    const empresa = (empresas ?? []).find(e => e.id === detalle.empresaId)
+    if (!empresa) {
+      toast.error('No se encontró la empresa de la orden')
+      return
+    }
+    const blob = await generarBlob(detalle, productos ?? [], empresa)
+    const url  = URL.createObjectURL(blob)
+    const win  = window.open(url, '_blank')
     win?.addEventListener('load', () => {
       win.print()
       URL.revokeObjectURL(url)
@@ -255,6 +268,7 @@ export default function OrdenesPage() {
               <TableHead>N°</TableHead>
               <TableHead>Fecha</TableHead>
               <TableHead>Prometida</TableHead>
+              <TableHead>Empresa</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead className="text-right">Total</TableHead>
               <TableHead className="text-right">Saldo</TableHead>
@@ -268,6 +282,7 @@ export default function OrdenesPage() {
                 <TableCell className="font-mono text-muted-foreground">{o.numero}</TableCell>
                 <TableCell>{formatFecha(o.createdAt)}</TableCell>
                 <TableCell>{/^\d{4}-\d{2}-\d{2}$/.test(o.fechaPrometida) ? o.fechaPrometida.split('-').reverse().join('/') : o.fechaPrometida}</TableCell>
+                <TableCell>{empresaNombrePorId.get(o.empresaId ?? '') ?? '—'}</TableCell>
                 <TableCell>{o.clienteNombre}</TableCell>
                 <TableCell className="text-right">{formatMoney(o.total)}</TableCell>
                 <TableCell className="text-right">{formatMoney(o.saldo)}</TableCell>

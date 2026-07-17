@@ -1,5 +1,5 @@
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer'
-import type { OrdenDeTrabajoConItems, Producto, FormaPago } from '@/shared/lib/types'
+import type { OrdenDeTrabajoConItems, Producto, FormaPago, Empresa } from '@/shared/lib/types'
 
 const BRAND_BROWN = '#1a1a1a'
 const BRAND_GOLD  = '#999'
@@ -72,9 +72,10 @@ const fechaPrometida = (s: string) => {
 interface Props {
   orden:     OrdenDeTrabajoConItems
   productos: Producto[]
+  empresa:   Empresa
 }
 
-export function OrdenPDF({ orden, productos }: Props) {
+export function OrdenPDF({ orden, productos, empresa }: Props) {
   const productoPorId = new Map(productos.map(p => [p.id, p]))
 
   return (
@@ -83,10 +84,11 @@ export function OrdenPDF({ orden, productos }: Props) {
         {/* Encabezado */}
         <View style={s.headerRow}>
           <View style={s.empresa}>
-            <Text style={s.empresaNombre}>Trofeos Carrillon Siglo 21</Text>
-            <Text style={s.empresaInfo}>Av. Italia 947 — Resistencia, Chaco</Text>
-            <Text style={s.empresaInfo}>Tel: 3624-103544</Text>
-            <Text style={s.empresaInfo}>carrillonventas@gmail.com</Text>
+            <Text style={s.empresaNombre}>{empresa.razonSocial}</Text>
+            <Text style={s.empresaInfo}>{empresa.nombreFantasia}</Text>
+            <Text style={s.empresaInfo}>{empresa.domicilio} — {empresa.localidad}</Text>
+            <Text style={s.empresaInfo}>CUIT: {empresa.cuit} · IIBB: {empresa.iibb}</Text>
+            <Text style={s.empresaInfo}>{empresa.condIva}</Text>
           </View>
           <View style={s.docRight}>
             <Text style={s.docLabel}>ORDEN DE TRABAJO</Text>
@@ -202,7 +204,7 @@ export function OrdenPDF({ orden, productos }: Props) {
         </View>
 
         <Text style={s.footer}>
-          Trofeos Carrillon Siglo 21 · Av. Italia 947, Resistencia, Chaco · Tel: 3624-103544
+          {empresa.nombreFantasia} · {empresa.domicilio}, {empresa.localidad} · CUIT: {empresa.cuit}
         </Text>
       </Page>
     </Document>
