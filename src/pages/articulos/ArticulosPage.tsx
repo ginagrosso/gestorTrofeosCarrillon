@@ -27,7 +27,7 @@ import {
   AlertDialogCancel,
 } from '@/shared/ui/alert-dialog'
 
-const ARTICULO_SEARCH_FIELDS: (keyof Articulo)[] = ['codigo', 'descripcion']
+const ARTICULO_SEARCH_FIELDS: (keyof Articulo)[] = ['codigo', 'descripcion', 'categoria', 'subcategoria']
 
 export default function ArticulosPage() {
   const { data: articulos, isLoading } = useArticulos()
@@ -118,10 +118,11 @@ export default function ArticulosPage() {
             <TableRow>
               <TableHead>Código</TableHead>
               <TableHead>Descripción</TableHead>
+              <TableHead>Categoría</TableHead>
+              <TableHead>Subcategoría</TableHead>
               <TableHead>Proveedor</TableHead>
               <TableHead className="text-right">Precio Costo</TableHead>
               <TableHead>Última actualización</TableHead>
-              <TableHead className="text-right">% IVA</TableHead>
               <TableHead className="text-right">Stock</TableHead>
               <TableHead>Unidad</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
@@ -132,10 +133,11 @@ export default function ArticulosPage() {
               <TableRow key={articulo.id}>
                 <TableCell className="font-medium">{articulo.codigo}</TableCell>
                 <TableCell>{articulo.descripcion}</TableCell>
+                <TableCell>{articulo.categoria || '—'}</TableCell>
+                <TableCell>{articulo.subcategoria || '—'}</TableCell>
                 <TableCell>{nombreProveedorPorId.get(articulo.proveedorId) || '—'}</TableCell>
                 <TableCell className="text-right">{formatMoney(articulo.precioCosto)}</TableCell>
                 <TableCell>{formatFecha(articulo.precioActualizadoAt)}</TableCell>
-                <TableCell className="text-right">{articulo.porcIva}</TableCell>
                 <TableCell className="text-right">{articulo.stock}</TableCell>
                 <TableCell>{articulo.unidad}</TableCell>
                 <TableCell className="text-right">

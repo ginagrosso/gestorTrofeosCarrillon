@@ -78,14 +78,17 @@ export const TIPO_DOC_LABELS: Record<InsertCliente['tipoDoc'], string> = {
 const precioSinDecimales = z.number().nonnegative().transform(v => Math.trunc(v))
 
 export const insertArticuloSchema = z.object({
-  codigo:      z.string().min(1, 'El código es obligatorio').max(50),
-  descripcion: z.string().min(1, 'La descripción es obligatoria').max(300),
-  precioCosto: precioSinDecimales,
-  porcIva:     z.number().nonnegative(),
-  precioVenta: precioSinDecimales,
-  proveedorId: z.string().min(1),
-  unidad:      z.string().max(20).default('unidad'),
-  stock:       z.number().int().default(0),
+  codigo:       z.string().min(1, 'El código es obligatorio').max(50),
+  descripcion:  z.string().min(1, 'La descripción es obligatoria').max(300),
+  precioCosto:  precioSinDecimales,
+  // Las dos empresas son monotributistas y no discriminan IVA: el default es 0.
+  porcIva:      z.number().nonnegative().default(0),
+  precioVenta:  precioSinDecimales,
+  proveedorId:  z.string().min(1),
+  unidad:       z.string().max(20).default('unidad'),
+  stock:        z.number().int().default(0),
+  categoria:    z.string().max(100).optional(),
+  subcategoria: z.string().max(100).optional(),
 })
 
 export const updateArticuloSchema = insertArticuloSchema.partial()
@@ -113,7 +116,8 @@ export const insertProductoSchema = z.object({
   codigo:       z.string().min(1, 'El código es obligatorio').max(50),
   descripcion:  z.string().min(1, 'La descripción es obligatoria').max(300),
   precioCosto:  precioSinDecimales,
-  porcIva:      z.number().nonnegative(),
+  // Las dos empresas son monotributistas y no discriminan IVA: el default es 0.
+  porcIva:      z.number().nonnegative().default(0),
   precioVenta:  precioSinDecimales,
   stockActual:  z.number().int().default(0),
   categoria:    z.string().max(100).optional(),

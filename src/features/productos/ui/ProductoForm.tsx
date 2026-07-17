@@ -39,7 +39,7 @@ export default function ProductoForm({ producto, onSuccess }: ProductoFormProps)
       codigo: '',
       descripcion: '',
       precioCosto: 0,
-      porcIva: 21,
+      porcIva: 0,
       precioVenta: 0,
       stockActual: 0,
       categoria: '',

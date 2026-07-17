@@ -80,6 +80,8 @@ export const articuloColumns: ColumnMap<ArticuloExport> = {
   proveedorNombre: { header: 'Proveedor',    export: a => a.proveedorNombre, import: v => String(v).trim() },
   unidad:          { header: 'Unidad',       export: a => a.unidad,          import: v => String(v).trim() },
   stock:           { header: 'Stock', aliases: ['Stock Actual'], export: a => a.stock, import: toNumber },
+  categoria:       { header: 'Categoría', aliases: ['Categoria'], export: a => a.categoria ?? '', import: toOptionalString },
+  subcategoria:    { header: 'Subcategoría', aliases: ['Subcategoria'], export: a => a.subcategoria ?? '', import: toOptionalString },
 }
 
 export type ProductoExport = Producto & { materiales: string }

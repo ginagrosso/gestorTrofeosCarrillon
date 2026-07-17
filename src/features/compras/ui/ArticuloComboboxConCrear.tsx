@@ -39,7 +39,7 @@ export function ArticuloComboboxConCrear({ proveedorId, articulosPorProveedor, v
       codigo:      codigo.trim(),
       descripcion: descripcion.trim(),
       precioCosto,
-      porcIva:     21,
+      porcIva:     0,
       precioVenta: 0,
       proveedorId,
       unidad:      'unidad',

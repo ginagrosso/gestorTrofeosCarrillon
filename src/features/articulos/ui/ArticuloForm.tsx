@@ -9,6 +9,7 @@ import { Label } from '@/shared/ui/label'
 import { Combobox } from '@/shared/ui/combobox'
 import { MoneyInput } from '@/shared/ui/money-input'
 import { NumberInput } from '@/shared/ui/number-input'
+import { useArticulos } from '../hooks/useArticulos'
 import { useCreateArticulo, useUpdateArticulo } from '../hooks/useArticulosMutations'
 
 interface ArticuloFormProps {
@@ -20,8 +21,11 @@ export default function ArticuloForm({ articulo, onSuccess }: ArticuloFormProps)
   const { mutate: createArticulo, isPending: isCreating } = useCreateArticulo()
   const { mutate: updateArticulo, isPending: isUpdating } = useUpdateArticulo()
   const { data: proveedores } = useProveedores()
+  const { data: articulos } = useArticulos()
   const isPending = isCreating || isUpdating
   const proveedorOptions = (proveedores ?? []).map(proveedor => ({ value: proveedor.id, label: proveedor.nombre }))
+  const categoriaOptions = [...new Set((articulos ?? []).map(a => a.categoria).filter((c): c is string => !!c))].sort()
+  const subcategoriaOptions = [...new Set((articulos ?? []).map(a => a.subcategoria).filter((c): c is string => !!c))].sort()
 
   const form = useForm<z.input<typeof insertArticuloSchema>, unknown, InsertArticulo>({
     resolver: zodResolver(insertArticuloSchema),
@@ -29,11 +33,13 @@ export default function ArticuloForm({ articulo, onSuccess }: ArticuloFormProps)
       codigo: '',
       descripcion: '',
       precioCosto: 0,
-      porcIva: 21,
+      porcIva: 0,
       precioVenta: 0,
       proveedorId: '',
       unidad: 'unidad',
       stock: 0,
+      categoria: '',
+      subcategoria: '',
     },
   })
 
@@ -131,6 +137,23 @@ export default function ArticuloForm({ articulo, onSuccess }: ArticuloFormProps)
         <div className="space-y-1">
           <Label htmlFor="unidad">Unidad</Label>
           <Input id="unidad" {...form.register('unidad')} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <Label htmlFor="categoria">Categoría (opcional)</Label>
+          <Input id="categoria" list="categoria-options" {...form.register('categoria')} />
+          <datalist id="categoria-options">
+            {categoriaOptions.map(opcion => <option key={opcion} value={opcion} />)}
+          </datalist>
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="subcategoria">Subcategoría (opcional)</Label>
+          <Input id="subcategoria" list="subcategoria-options" {...form.register('subcategoria')} />
+          <datalist id="subcategoria-options">
+            {subcategoriaOptions.map(opcion => <option key={opcion} value={opcion} />)}
+          </datalist>
         </div>
       </div>
 
